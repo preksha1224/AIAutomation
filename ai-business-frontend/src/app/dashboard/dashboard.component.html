@@ -1,0 +1,132 @@
+<section class="drive-shell">
+  <header class="drive-header">
+    <div>
+      <p class="breadcrumb">My Drive</p>
+      <h1>Documents</h1>
+      <p>Upload, search, and manage your files with a Google Drive-style workspace.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="button-secondary" routerLink="/chat">AI Chat</button>
+      <button class="button-secondary" routerLink="/login">Login</button>
+    </div>
+  </header>
+
+  <div class="drive-toolbar">
+    <div class="toolbar-search">
+      <input type="text" [(ngModel)]="search" placeholder="Search your files" />
+      <button type="button" class="button-primary" (click)="runSearch()">Search</button>
+    </div>
+  </div>
+
+  <div class="drive-grid">
+    <aside class="drive-sidebar">
+      <div class="sidebar-card stats-card">
+        <h2>Workspace summary</h2>
+        <div class="stats-grid">
+          <div>
+            <p>Total files</p>
+            <strong>{{ documents.length }}</strong>
+          </div>
+          <div>
+            <p>Processed</p>
+            <strong>{{ documents.filter(doc => doc.status === 'Processed').length }}</strong>
+          </div>
+          <div>
+            <p>Pending</p>
+            <strong>{{ documents.filter(doc => doc.status !== 'Processed').length }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-card detail-card" *ngIf="selectedDocument">
+        <h2>Selected file</h2>
+        <p class="file-name">{{ selectedDocument.name }}</p>
+        <p>{{ selectedDocument.type }} • {{ selectedDocument.status }}</p>
+        <p class="file-date">Uploaded {{ selectedDocument.uploadedAt }}</p>
+        <div class="detail-actions">
+          <button class="button-secondary" (click)="editDocument(selectedDocument)">Rename</button>
+          <button class="button-danger" (click)="deleteDocument(selectedDocument)">Delete</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="drive-main">
+      <section class="upload-panel">
+        <div class="upload-panel-header">
+          <div>
+            <h2>Upload Documents</h2>
+            <p>Drag & drop files here or click to browse.</p>
+          </div>
+          <span class="status-tag">{{ statusMessage || 'Ready to upload' }}</span>
+        </div>
+
+        <label class="upload-dropzone">
+          <input type="file" (change)="selectFile($event)" />
+          <div class="upload-dropzone-inner">
+            <div class="upload-icon">⬆</div>
+            <p class="upload-title">Drag & drop files here</p>
+            <p class="upload-subtitle">or click to browse</p>
+            <p class="upload-support">Supports: PDF, DOCX, XLSX, PNG, JPG (Max 50MB)</p>
+          </div>
+        </label>
+
+        <div class="upload-summary">
+          <button class="button-secondary choose-button" type="button">
+            Choose Files
+            <input type="file" (change)="selectFile($event)" />
+          </button>
+          <button class="button-primary" (click)="uploadDocument()" [disabled]="!selectedFile">Upload & Process</button>
+          <span class="file-status">{{ selectedFile ? selectedFile.name : 'No file selected' }}</span>
+        </div>
+      </section>
+
+      <section class="files-panel">
+        <div class="files-header">
+          <div>
+            <h2>File library</h2>
+            <p>{{ searchResults.length ? searchResults.length : documents.length }} items</p>
+          </div>
+          <button class="button-secondary" type="button" (click)="runSearch()">Refresh</button>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let document of (searchResults.length ? searchResults : documents)">
+                <td>
+                  <strong>{{ document.name }}</strong>
+                  <p class="file-subtitle">{{ document.type }}</p>
+                </td>
+                <td>{{ document.type }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="{ processed: document.status === 'Processed', pending: document.status !== 'Processed' }">
+                    {{ document.status }}
+                  </span>
+                </td>
+                <td>{{ document.uploadedAt }}</td>
+                <td class="table-actions">
+                  <button type="button" class="button-secondary" (click)="viewDocument(document)">View</button>
+                  <button type="button" class="button-secondary" (click)="editDocument(document)">Edit</button>
+                  <button type="button" class="button-danger" (click)="deleteDocument(document)">Delete</button>
+                </td>
+              </tr>
+              <tr *ngIf="(searchResults.length ? searchResults.length : documents.length) === 0">
+                <td colspan="5" class="empty-state">No documents found. Upload a new file to get started.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</section>

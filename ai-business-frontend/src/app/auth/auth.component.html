@@ -1,0 +1,22 @@
+<section class="auth-shell">
+  <div class="auth-card">
+    <h2>Sign in to AI Documents</h2>
+    <p>Secure access for upload, search, and document automation.</p>
+
+    <form (ngSubmit)="login()" class="auth-form">
+      <label>
+        Email
+        <input type="email" [(ngModel)]="email" name="email" required />
+      </label>
+
+      <label>
+        Password
+        <input type="password" [(ngModel)]="password" name="password" required />
+      </label>
+
+      <button type="submit" [disabled]="loading">{{ loading ? 'Signing in…' : 'Sign in' }}</button>
+
+      <p class="error" *ngIf="error">{{ error }}</p>
+    </form>
+  </div>
+</section>

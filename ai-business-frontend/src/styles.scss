@@ -1,0 +1,53 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --card: #1A1A1A;
+  --card-hover: #222222;
+  --border: #2D2D2D;
+  --text: #eef2ff;
+  --paragraph: #cbd5e1;
+  --muted: #90a1c3;
+  --primary: #6D5EF8;
+  --secondary: #c084fc;
+  --accent: #6D5EF8;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #fb7185;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--background);
+  color: var(--text);
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  outline: none;
+}
+
+::selection {
+  background: rgba(96, 165, 250, 0.25);
+}

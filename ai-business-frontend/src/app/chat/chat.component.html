@@ -1,0 +1,27 @@
+<section class="chat-shell">
+  <header class="chat-header">
+    <div>
+      <h1>AI Document Chat</h1>
+      <p>Ask questions about your uploaded files and automation workflows.</p>
+    </div>
+  </header>
+
+  <div class="chat-body">
+    <div class="conversation">
+      <div class="message" *ngFor="let message of conversation" [ngClass]="message.role">
+        <span class="role">{{ message.role }}</span>
+        <p>{{ message.content }}</p>
+      </div>
+    </div>
+
+    <form class="chat-input" (ngSubmit)="sendMessage()">
+      <input
+        type="text"
+        [(ngModel)]="prompt"
+        name="prompt"
+        placeholder="Ask about your documents or automation workflow"
+      />
+      <button type="submit" [disabled]="loading">{{ loading ? 'Sending…' : 'Send' }}</button>
+    </form>
+  </div>
+</section>

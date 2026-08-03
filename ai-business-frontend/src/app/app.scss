@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--background);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem 0 2rem;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: min(2400px, 100%);
+  margin: 0 auto;
+  padding: 1.75rem 3rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  box-shadow: 0 35px 80px rgba(10, 18, 35, 0.24);
+}
+
+.brand {
+  display: grid;
+  gap: 0.45rem;
+  
+}
+
+.brand-title {
+  font-size: clamp(1.95rem, 2.5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.brand-subtitle {
+  font-size: 1rem;
+  color: var(--paragraph);
+  line-height: 1.8;
+  max-width: 38rem;
+}
+
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.app-nav a,
+.logout-button {
+  border-radius: 999px;
+  padding: 0.95rem 1.2rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.app-nav a {
+  color: var(--text);
+  background: var(--card-hover);
+}
+
+.app-nav a.active,
+.app-nav a:hover {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--text);
+  box-shadow: 0 18px 40px rgba(96, 165, 250, 0.18);
+  transform: translateY(-1px);
+}
+
+.logout-button {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fda4af;
+}
+
+.logout-button:hover {
+  background: rgba(239, 68, 68, 0.28);
+  transform: translateY(-1px);
+}
+
+.page-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .page-shell {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (max-width: 840px) {
+  .app-header,
+  .page-shell {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .app-nav {
+    justify-content: center;
+  }
+}

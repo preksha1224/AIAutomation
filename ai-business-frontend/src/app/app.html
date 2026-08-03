@@ -1,0 +1,19 @@
+﻿<main class="app-shell">
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-title">AI Business Automation</span>
+      <span class="brand-subtitle">A classy document workspace for uploads, intelligent search, and AI chat.</span>
+    </div>
+
+    <nav class="app-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/chat" routerLinkActive="active">Chat</a>
+      <a routerLink="/login" routerLinkActive="active">Login</a>
+      <button class="logout-button" *ngIf="auth.isAuthenticated()" (click)="auth.logout()">Logout</button>
+    </nav>
+  </header>
+
+  <section class="page-shell">
+    <router-outlet></router-outlet>
+  </section>
+</main>

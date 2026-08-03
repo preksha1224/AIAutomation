@@ -1,0 +1,21 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+interface ChatResponse {
+  answer?: string;
+  text?: string;
+  result?: string;
+  [key: string]: any;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly chatWebhook = 'https://intn8n.deenovum.com/webhook/23211c68-7bcd-42bb-b472-8a5b2cc14b5e';
+
+  constructor(private http: HttpClient) {}
+
+  sendMessage(prompt: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(this.chatWebhook, { prompt });
+  }
+}
