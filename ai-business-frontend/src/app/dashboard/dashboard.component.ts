@@ -54,40 +54,36 @@ export class DashboardComponent implements OnInit {
 
   }
 
-  uploadDocument(): void {
-
-    if (!this.selectedFile) {
-
-      this.statusMessage = 'Please select a file.';
-      return;
-
-    }
-
-    this.statusMessage = 'Uploading...';
-
-    this.documentService.uploadDocument(this.selectedFile).subscribe({
-
-      next: () => {
-
-        this.statusMessage = 'Upload successful';
-
-        this.selectedFile = null;
-
-        this.loadDocuments();
-
-      },
-
-      error: (err: any) => {
-
-        console.error(err);
-
-        this.statusMessage = 'Upload failed';
-
-      }
-
-    });
-
+ uploadDocument() {
+  if (!this.selectedFile) {
+    return;
   }
+
+  const uploadedFile = this.selectedFile;
+
+  this.documentService.uploadDocument(uploadedFile).subscribe({
+    next: () => {
+
+      this.documents.unshift({
+        id: Date.now().toString(),
+        name: uploadedFile.name,
+        type: uploadedFile.type || 'Unknown',
+        status: 'Processed',
+        uploadedAt: new Date().toLocaleString()
+      });
+
+      this.searchResults = [...this.documents];
+
+      this.selectedFile = null;
+      this.statusMessage = 'Upload successful';
+
+    },
+    error: (err) => {
+      console.error(err);
+      this.statusMessage = 'Upload failed';
+    }
+  });
+}
 
   loadDocuments(): void {
 
