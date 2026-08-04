@@ -11,7 +11,7 @@ export interface DocumentSummary {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DocumentService {
 
@@ -19,6 +19,10 @@ export class DocumentService {
     'https://intn8n.deenovum.com/webhook-test/4eb0f07a-0b98-4e75-9df3-4454666fdb3a';
 
   constructor(private http: HttpClient) {}
+
+  private post(formData: FormData): Observable<any> {
+    return this.http.post(this.webhook, formData);
+  }
 
   /**
    * CREATE
@@ -30,68 +34,72 @@ export class DocumentService {
     formData.append('operation', 'create');
     formData.append('file', file);
 
-    return this.http.post(this.webhook, formData);
-
+    return this.post(formData);
   }
 
   /**
-   * READ ALL DOCUMENTS
+   * LIST
    */
   getDocuments(): Observable<DocumentSummary[]> {
 
-    return this.http.post<DocumentSummary[]>(this.webhook, {
-      operation: 'list'
-    });
+    const formData = new FormData();
 
+    formData.append('operation', 'list');
+
+    return this.post(formData);
   }
 
   /**
-   * READ SINGLE DOCUMENT
+   * READ
    */
   getDocument(id: string): Observable<DocumentSummary> {
 
-    return this.http.post<DocumentSummary>(this.webhook, {
-      operation: 'read',
-      documentId: id
-    });
+    const formData = new FormData();
 
+    formData.append('operation', 'read');
+    formData.append('documentId', id);
+
+    return this.post(formData);
   }
 
   /**
-   * SEARCH DOCUMENTS
+   * SEARCH
    */
-  searchDocuments(query: string): Observable<DocumentSummary[]> {
+  searchDocuments(query: string): Observable<any> {
 
-    return this.http.post<DocumentSummary[]>(this.webhook, {
-      operation: 'search',
-      query: query
-    });
+    const formData = new FormData();
 
+    formData.append('operation', 'search');
+    formData.append('query', query);
+
+    return this.post(formData);
   }
 
   /**
-   * UPDATE DOCUMENT
+   * UPDATE
    */
   updateDocument(id: string, name: string): Observable<any> {
 
-    return this.http.post(this.webhook, {
-      operation: 'update',
-      documentId: id,
-      name: name
-    });
+    const formData = new FormData();
 
+    formData.append('operation', 'update');
+    formData.append('documentId', id);
+    formData.append('name', name);
+
+    return this.post(formData);
   }
 
   /**
-   * DELETE DOCUMENT
+   * DELETE
    */
   deleteDocument(id: string): Observable<any> {
 
-    return this.http.post(this.webhook, {
-      operation: 'delete',
-      documentId: id
-    });
+    const formData = new FormData();
 
+    formData.append('operation', 'delete');
+    formData.append('documentId', id);
+
+    return this.post(formData);
   }
 
 }

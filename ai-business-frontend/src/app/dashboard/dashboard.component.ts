@@ -15,10 +15,9 @@ interface UploadedDocument {
   selector: 'app-dashboard',
   standalone: false,
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
-
   documents: UploadedDocument[] = [];
   searchResults: UploadedDocument[] = [];
 
@@ -28,12 +27,15 @@ export class DashboardComponent implements OnInit {
   search = '';
   statusMessage = '';
 
+  // ADD THIS
+  isUploading = false;
+
   private isBrowser = false;
 
   constructor(
     public auth: AuthService,
     private documentService: DocumentService,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -45,110 +47,82 @@ export class DashboardComponent implements OnInit {
   }
 
   selectFile(event: Event): void {
-
     const input = event.target as HTMLInputElement;
 
     if (input.files?.length) {
       this.selectedFile = input.files[0];
     }
-
   }
 
- uploadDocument() {
-  if (!this.selectedFile) {
-    return;
-  }
-
-  const uploadedFile = this.selectedFile;
-
-  this.documentService.uploadDocument(uploadedFile).subscribe({
-    next: () => {
-
-      this.documents.unshift({
-        id: Date.now().toString(),
-        name: uploadedFile.name,
-        type: uploadedFile.type || 'Unknown',
-        status: 'Processed',
-        uploadedAt: new Date().toLocaleString()
-      });
-
-      this.searchResults = [...this.documents];
-
-      this.selectedFile = null;
-      this.statusMessage = 'Upload successful';
-
-    },
-    error: (err) => {
-      console.error(err);
-      this.statusMessage = 'Upload failed';
+  uploadDocument(): void {
+    if (!this.selectedFile) {
+      return;
     }
-  });
-}
 
-  loadDocuments(): void {
+    this.isUploading = true;
+    this.statusMessage = 'Uploading...';
 
-    this.documentService.getDocuments().subscribe({
+    this.documentService.uploadDocument(this.selectedFile).subscribe({
+      next: () => {
+        this.selectedFile = null;
+        this.statusMessage = 'Upload successful';
 
-      next: (docs) => {
+        this.isUploading = false;
 
-        this.documents = docs;
-
-        this.searchResults = docs;
-
+        // Reload documents from backend
+        this.loadDocuments();
       },
 
-      error: (err: any) => {
-
+      error: (err) => {
         console.error(err);
 
-      }
-
+        this.statusMessage = 'Upload failed';
+        this.isUploading = false;
+      },
     });
+  }
 
+  loadDocuments(): void {
+    console.log('LOAD DOCUMENTS CALLED');
+
+    this.documentService.getDocuments().subscribe({
+      next: (docs) => {
+        console.log('LIST RESPONSE', docs);
+
+        this.documents = docs;
+        this.searchResults = docs;
+      },
+      error: (err) => {
+        console.error('LIST ERROR', err);
+      },
+    });
   }
 
   runSearch(): void {
-
     this.documentService.searchDocuments(this.search).subscribe({
-
       next: (results: any) => {
-
         this.searchResults = results;
-
       },
 
       error: (err: any) => {
-
         console.error(err);
-
-      }
-
+      },
     });
-
   }
 
   viewDocument(document: UploadedDocument): void {
-
     this.documentService.getDocument(document.id).subscribe({
-
       next: (doc) => {
-
         this.selectedDocument = doc;
-
       },
 
       error: (err: any) => {
-
         console.error(err);
-
-      }
-
+      },
     });
-
   }
 
   editDocument(document: UploadedDocument): void {
-
     const newName = prompt('Enter new document name', document.name);
 
     if (!newName) {
@@ -156,55 +130,37 @@ export class DashboardComponent implements OnInit {
     }
 
     this.documentService.updateDocument(document.id, newName).subscribe({
-
       next: () => {
-
         this.statusMessage = 'Document updated';
 
         this.loadDocuments();
-
       },
 
       error: (err: any) => {
-
         console.error(err);
-
-      }
-
+      },
     });
-
   }
 
   deleteDocument(document: UploadedDocument): void {
-
     if (!confirm(`Delete ${document.name}?`)) {
       return;
     }
 
     this.documentService.deleteDocument(document.id).subscribe({
-
       next: () => {
-
         this.statusMessage = 'Document deleted';
 
         this.loadDocuments();
-
       },
 
       error: (err: any) => {
-
         console.error(err);
-
-      }
-
+      },
     });
-
   }
 
   logout(): void {
-
     this.auth.logout();
-
   }
-
 }
