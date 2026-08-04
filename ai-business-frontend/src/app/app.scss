@@ -1,120 +1,306 @@
 :host {
   display: block;
   min-height: 100vh;
-  color: var(--text);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--background);
+  background: #f5f7fb;
+  font-family: "Inter", sans-serif;
+  color: #111827;
 }
 
-.app-shell {
-  min-height: 100vh;
-  display: grid;
-  gap: 1.5rem;
-  padding: 1.5rem 0 2rem;
-}
+/* ================================
+   Main Layout
+================================ */
 
-.app-header {
+.layout {
   display: flex;
-  flex-wrap: wrap;
+  min-height: 100vh;
+  background: #f5f7fb;
+}
+
+/* ================================
+   Sidebar
+================================ */
+
+.sidebar {
+  width: 270px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+/* Logo */
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 45px;
+}
+
+.logo-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+}
+
+.logo h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.logo span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ================================
+   Sidebar Menu
+================================ */
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: #4b5563;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-weight: 600;
+  transition: .25s;
+}
+
+.sidebar-menu a:hover {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.sidebar-menu a.active {
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: white;
+  box-shadow: 0 8px 25px rgba(79,70,229,.25);
+}
+
+.sidebar-menu span {
+  font-size: 18px;
+}
+
+/* ================================
+   Logout
+================================ */
+
+.sidebar-bottom {
+  margin-top: 40px;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 14px;
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+}
+
+/* ================================
+   Main Area
+================================ */
+
+.main-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================================
+   Topbar
+================================ */
+
+.topbar {
+  height: 80px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  width: min(2400px, 100%);
-  margin: 0 auto;
-  padding: 1.75rem 3rem;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 1.75rem;
-  box-shadow: 0 35px 80px rgba(10, 18, 35, 0.24);
+  padding: 0 35px;
 }
 
-.brand {
-  display: grid;
-  gap: 0.45rem;
-  
+/* Search */
+
+.search-box {
+  width: 420px;
 }
 
-.brand-title {
-  font-size: clamp(1.95rem, 2.5vw, 3rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-}
-
-.brand-subtitle {
-  font-size: 1rem;
-  color: var(--paragraph);
-  line-height: 1.8;
-  max-width: 38rem;
-}
-
-.app-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.app-nav a,
-.logout-button {
-  border-radius: 999px;
-  padding: 0.95rem 1.2rem;
-  font-weight: 700;
-  border: 1px solid transparent;
-  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.app-nav a {
-  color: var(--text);
-  background: var(--card-hover);
-}
-
-.app-nav a.active,
-.app-nav a:hover {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: var(--text);
-  box-shadow: 0 18px 40px rgba(96, 165, 250, 0.18);
-  transform: translateY(-1px);
-}
-
-.logout-button {
-  background: rgba(239, 68, 68, 0.18);
-  color: #fda4af;
-}
-
-.logout-button:hover {
-  background: rgba(239, 68, 68, 0.28);
-  transform: translateY(-1px);
-}
-
-.page-shell {
+.search-box input {
   width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 0 2rem;
-  display: grid;
-  gap: 1.5rem;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  padding: 0 20px;
+  font-size: 15px;
+  outline: none;
+  transition: .25s;
 }
 
-@media (max-width: 1200px) {
-  .page-shell {
-    padding: 0 1.5rem;
+.search-box input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79,70,229,.15);
+}
+
+/* ================================
+   Right
+================================ */
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.notification {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: #eef2ff;
+  cursor: pointer;
+  transition: .25s;
+  font-size: 18px;
+}
+
+.notification:hover {
+  transform: translateY(-2px);
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+}
+
+.profile strong {
+  display: block;
+  font-size: 15px;
+}
+
+.profile small {
+  color: #6b7280;
+}
+
+/* ================================
+   Content
+================================ */
+
+.content {
+  flex: 1;
+  padding: 35px;
+  overflow-y: auto;
+}
+
+/* ================================
+   Scrollbar
+================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 50px;
+}
+
+/* ================================
+   Responsive
+================================ */
+
+@media (max-width: 1100px) {
+
+  .sidebar {
+    width: 90px;
+    padding: 20px 12px;
   }
-}
 
-@media (max-width: 840px) {
-  .app-header,
-  .page-shell {
-    padding: 1rem;
+  .logo h2,
+  .logo span {
+    display: none;
   }
-}
 
-@media (max-width: 640px) {
-  .app-header {
+  .sidebar-menu a {
     justify-content: center;
-    text-align: center;
   }
 
-  .app-nav {
-    justify-content: center;
+  .sidebar-menu a span {
+    margin: 0;
   }
+
+  .sidebar-menu a {
+    font-size: 0;
+  }
+
+  .search-box {
+    width: 250px;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  .sidebar {
+    display: none;
+  }
+
+  .topbar {
+    padding: 0 18px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .search-box {
+    display: none;
+  }
+
+  .profile small {
+    display: none;
+  }
+
 }

@@ -43,7 +43,7 @@
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": [ "kills-watched-apartments-usa.trycloudflare.com" ]
             },
             "ssr": {
               "entry": "src/server.ts"
@@ -74,17 +74,22 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
-            "production": {
-              "buildTarget": "ai-business-frontend:build:production"
-            },
-            "development": {
-              "buildTarget": "ai-business-frontend:build:development"
-            }
-          },
-          "defaultConfiguration": "development"
-        },
+  "builder": "@angular/build:dev-server",
+  "options": {
+    "allowedHosts": [
+      "kills-watched-apartments-usa.trycloudflare.com"
+    ]
+  },
+  "configurations": {
+    "production": {
+      "buildTarget": "ai-business-frontend:build:production"
+    },
+    "development": {
+      "buildTarget": "ai-business-frontend:build:development"
+    }
+  },
+  "defaultConfiguration": "development"
+},
         "test": {
           "builder": "@angular/build:unit-test"
         }

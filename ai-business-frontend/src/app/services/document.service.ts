@@ -1,105 +1,139 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 
-export interface DocumentSummary {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  uploadedAt: string;
-}
+import { WebhookRequest } from '../models/webhook-request.model';
+import { DocumentOperation } from '../models/document-operation.enum';
+import { DocumentSummary } from '../models/document.summary.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DocumentService {
-
   private readonly webhook =
     'https://intn8n.deenovum.com/webhook-test/4eb0f07a-0b98-4e75-9df3-4454666fdb3a';
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
-  private post(formData: FormData): Observable<any> {
-    return this.http.post(this.webhook, formData);
+  /**
+   * Generic request to n8n
+   */
+  private send<T>(request: WebhookRequest): Observable<T> {
+    const formData = new FormData();
+
+    formData.append('operation', request.operation);
+
+    if (request.file) {
+      formData.append('file', request.file);
+    }
+
+    if (request.documentId) {
+      formData.append('documentId', request.documentId);
+    }
+
+    if (request.name) {
+      formData.append('name', request.name);
+    }
+
+    if (request.query) {
+      formData.append('query', request.query);
+    }
+
+    console.log('============================');
+    console.log('REQUEST');
+    console.log(request);
+    console.log('============================');
+
+    return this.http.post<T>(this.webhook, formData);
   }
 
   /**
    * CREATE
    */
   uploadDocument(file: File): Observable<any> {
-
-    const formData = new FormData();
-
-    formData.append('operation', 'create');
-    formData.append('file', file);
-
-    return this.post(formData);
+    return this.send<any>({
+      operation: DocumentOperation.CREATE,
+      file,
+    });
   }
 
   /**
    * LIST
    */
   getDocuments(): Observable<DocumentSummary[]> {
+    return this.send<any>({
+      operation: DocumentOperation.LIST,
+    }).pipe(
+      map((response: any) => {
+        const documents = Array.isArray(response) ? response : [response];
 
-    const formData = new FormData();
-
-    formData.append('operation', 'list');
-
-    return this.post(formData);
+        return documents.map((doc: any) => ({
+          id: doc.document_id,
+          name: doc.file_name,
+          type: doc.file_type,
+          status: doc.status,
+          uploadedAt: doc.uploaded_at,
+        }));
+      }),
+    );
   }
 
   /**
    * READ
    */
-  getDocument(id: string): Observable<DocumentSummary> {
-
-    const formData = new FormData();
-
-    formData.append('operation', 'read');
-    formData.append('documentId', id);
-
-    return this.post(formData);
-  }
-
-  /**
-   * SEARCH
-   */
-  searchDocuments(query: string): Observable<any> {
-
-    const formData = new FormData();
-
-    formData.append('operation', 'search');
-    formData.append('query', query);
-
-    return this.post(formData);
+  getDocument(documentId: string): Observable<DocumentSummary> {
+    return this.send<any>({
+      operation: DocumentOperation.READ,
+      documentId,
+    }).pipe(
+      map((document) => ({
+        id: document.id,
+        name: document.name,
+        type: document.type,
+        status: document.status,
+        uploadedAt: document.uploaded_at,
+      })),
+    );
   }
 
   /**
    * UPDATE
    */
-  updateDocument(id: string, name: string): Observable<any> {
-
-    const formData = new FormData();
-
-    formData.append('operation', 'update');
-    formData.append('documentId', id);
-    formData.append('name', name);
-
-    return this.post(formData);
+  updateDocument(documentId: string, name: string): Observable<any> {
+    return this.send<any>({
+      operation: DocumentOperation.UPDATE,
+      documentId,
+      name,
+    });
   }
 
   /**
    * DELETE
    */
-  deleteDocument(id: string): Observable<any> {
-
-    const formData = new FormData();
-
-    formData.append('operation', 'delete');
-    formData.append('documentId', id);
-
-    return this.post(formData);
+  deleteDocument(documentId: string): Observable<any> {
+    return this.send<any>({
+      operation: DocumentOperation.DELETE,
+      documentId,
+    });
   }
 
+  /**
+   * SEARCH
+   */
+  searchDocuments(query: string): Observable<DocumentSummary[]> {
+    return this.send<any[]>({
+      operation: DocumentOperation.SEARCH,
+      query,
+    }).pipe(
+      map((documents: any[]) =>
+        documents.map((document) => ({
+          id: document.id,
+          name: document.name,
+          type: document.type,
+          status: document.status,
+          uploadedAt: document.uploaded_at,
+        })),
+      ),
+    );
+  }
 }

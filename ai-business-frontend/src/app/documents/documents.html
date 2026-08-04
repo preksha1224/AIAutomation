@@ -1,0 +1,175 @@
+<div>
+    <section class="search-card">
+
+    <input
+      type="text"
+      [(ngModel)]="search"
+      placeholder="Search documents..." />
+
+    <button
+      class="button-primary"
+      (click)="runSearch()">
+      Search
+    </button>
+
+  </section>
+
+  <section class="upload-panel">
+
+    <div class="upload-panel-header">
+      <div>
+        <h2>Upload Document</h2>
+        <p>Drag & Drop or choose a file.</p>
+      </div>
+
+      <span class="status-tag">
+        {{ statusMessage || 'Ready to upload' }}
+      </span>
+    </div>
+
+    <label class="upload-dropzone">
+
+      <input
+        type="file"
+        accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+        (change)="selectFile($event)" />
+
+      <div class="upload-dropzone-inner">
+        <div class="upload-icon">⬆</div>
+
+        <h3>Drop files here</h3>
+
+        <p>PDF • DOCX • XLSX • PNG • JPG</p>
+      </div>
+
+    </label>
+
+    <div class="upload-summary">
+
+      <button class="button-secondary">
+        Choose File
+
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+          (change)="selectFile($event)" />
+      </button>
+
+      <button
+        class="button-primary"
+        (click)="uploadDocument()"
+        [disabled]="!selectedFile || isUploading">
+
+        {{ isUploading ? 'Uploading...' : 'Upload & Process' }}
+
+      </button>
+
+      <span>
+        <ng-container *ngIf="selectedFile; else noFile">
+          {{ selectedFile.name }}
+        </ng-container>
+
+        <ng-template #noFile>
+          No file selected
+        </ng-template>
+
+      </span>
+
+    </div>
+
+  </section>
+
+  <section class="files-panel">
+
+    <div class="files-header">
+
+      <div>
+        <h2>Recent Documents</h2>
+
+        <p>
+          {{ searchResults.length ? searchResults.length : documents.length }}
+          Files
+        </p>
+
+      </div>
+
+      <button
+        class="button-secondary"
+        (click)="loadDocuments()">
+        Refresh
+      </button>
+
+    </div>
+
+    <div class="table-scroll">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Document</th>
+            <th>Status</th>
+            <th>Uploaded</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr
+            *ngFor="let document of searchResults">
+
+            <td>
+              <strong>{{ document.name }}</strong>
+              <div>{{ document.type }}</div>
+            </td>
+
+            <td>
+
+              <span
+                class="status-badge"
+                [ngClass]="{
+                    processed: document.status === 'Processed',
+                    pending: document.status !== 'Processed'
+                }">
+
+                {{ document.status }}
+
+              </span>
+
+            </td>
+
+            <td>{{ document.uploadedAt }}</td>
+
+            <td>
+
+              <button
+                class="button-secondary"
+                (click)="viewDocument(document)">
+                View
+              </button>
+
+              <button
+                class="button-secondary"
+                (click)="editDocument(document)">
+                Rename
+              </button>
+
+              <button
+                class="button-danger"
+                (click)="deleteDocument(document)">
+                Delete
+              </button>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+</div>
