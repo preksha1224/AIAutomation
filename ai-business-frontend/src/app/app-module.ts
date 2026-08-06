@@ -15,9 +15,10 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { ChatComponent } from './chat/chat.component';
 import { AuthInterceptor } from './services/auth.interceptor';
 import { Documents } from './documents/documents';
+import { AmazonChatBot } from './amazon-chat-bot/amazon-chat-bot';
 
 @NgModule({
-  declarations: [App, AuthComponent, DashboardComponent, ChatComponent, Documents],
+  declarations: [App, AuthComponent, DashboardComponent, ChatComponent, Documents, AmazonChatBot],
   imports: [BrowserModule, AppRoutingModule, HttpClientModule, FormsModule, ReactiveFormsModule],
   providers: [
     provideHttpClient(withFetch()),

@@ -1,0 +1,79 @@
+<section class="chat-page">
+
+  <!-- Header -->
+  <div class="chat-header">
+
+    <div>
+      <h1>🤖 AI Assistant</h1>
+      <p>Ask questions about your uploaded documents and automation workflows.</p>
+    </div>
+
+    <div class="chat-status">
+      <span class="status-dot"></span>
+      AI Online
+    </div>
+
+  </div>
+
+  <!-- Conversation -->
+
+  <div class="conversation-card">
+
+    <div class="conversation">
+
+      <div
+        class="message"
+        *ngFor="let message of conversation"
+        [ngClass]="message.role">
+
+        <div class="message-header">
+
+          <div class="avatar">
+
+            {{ message.role === 'user' ? '👤' : '🤖' }}
+
+          </div>
+
+          <span>
+
+            {{ message.role === 'user' ? 'You' : 'AI Assistant' }}
+
+          </span>
+
+        </div>
+
+        <p>
+
+          {{ message.content }}
+
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Input -->
+
+  <form
+    class="chat-input-card"
+    (ngSubmit)="sendMessage()">
+
+    <input
+      type="text"
+      [(ngModel)]="prompt"
+      name="prompt"
+      placeholder="Ask anything about your documents..." />
+
+    <button
+      type="submit"
+      [disabled]="loading">
+
+      {{ loading ? 'Sending...' : 'Send' }}
+
+    </button>
+
+  </form>
+
+</section>

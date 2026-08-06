@@ -304,3 +304,55 @@
   }
 
 }
+
+
+/* ==========================
+   Company Logo
+========================== */
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0 30px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 30px;
+}
+
+.company-logo {
+  width: 200px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.company-logo:hover {
+  transform: scale(1.03);
+}
+
+.topbar {
+  height: 85px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 35px;
+}
+
+.topbar-title h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.topbar-title p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}

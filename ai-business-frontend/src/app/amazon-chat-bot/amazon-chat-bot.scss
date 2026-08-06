@@ -1,0 +1,334 @@
+:host{
+    display:block;
+}
+
+.chat-page{
+
+    display:flex;
+    flex-direction:column;
+
+    gap:24px;
+
+}
+
+/* ==========================
+Header
+========================== */
+
+.chat-header{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    box-shadow:0 8px 25px rgba(15,23,42,.05);
+
+}
+
+.chat-header h1{
+
+    margin:0;
+
+    font-size:30px;
+
+    color:#111827;
+
+}
+
+.chat-header p{
+
+    margin-top:8px;
+
+    color:#6B7280;
+
+}
+
+.chat-status{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    font-weight:600;
+
+    color:#16A34A;
+
+}
+
+.status-dot{
+
+    width:10px;
+
+    height:10px;
+
+    border-radius:50%;
+
+    background:#22C55E;
+
+}
+
+/* ==========================
+Conversation
+========================== */
+
+.conversation-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    box-shadow:0 8px 25px rgba(15,23,42,.05);
+
+    padding:24px;
+
+    min-height:450px;
+
+}
+
+.conversation{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+    max-height:500px;
+
+    overflow:auto;
+
+}
+
+/* ==========================
+Message
+========================== */
+
+.message{
+
+    max-width:75%;
+
+    padding:18px;
+
+    border-radius:16px;
+
+    animation:fade .3s ease;
+
+}
+
+.message.user{
+
+    align-self:flex-end;
+
+    background:linear-gradient(135deg,#4F46E5,#2563EB);
+
+    color:white;
+
+}
+
+.message.assistant{
+
+    align-self:flex-start;
+
+    background:#F3F4F6;
+
+}
+
+.message-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin-bottom:10px;
+
+    font-weight:600;
+
+}
+
+.avatar{
+
+    width:34px;
+
+    height:34px;
+
+    border-radius:50%;
+
+    background:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:16px;
+
+}
+
+.message.user .avatar{
+
+    color:#111827;
+
+}
+
+.message p{
+
+    margin:0;
+
+    line-height:1.7;
+
+}
+
+/* ==========================
+Input
+========================== */
+
+.chat-input-card{
+
+    display:flex;
+
+    gap:16px;
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:20px;
+
+    box-shadow:0 8px 25px rgba(15,23,42,.05);
+
+}
+
+.chat-input-card input{
+
+    flex:1;
+
+    height:52px;
+
+    border:1px solid #D1D5DB;
+
+    border-radius:14px;
+
+    padding:0 18px;
+
+    font-size:15px;
+
+    outline:none;
+
+    transition:.25s;
+
+}
+
+.chat-input-card input:focus{
+
+    border-color:#4F46E5;
+
+    box-shadow:0 0 0 4px rgba(79,70,229,.12);
+
+}
+
+.chat-input-card button{
+
+    width:140px;
+
+    border:none;
+
+    border-radius:14px;
+
+    background:linear-gradient(135deg,#4F46E5,#2563EB);
+
+    color:white;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.chat-input-card button:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.chat-input-card button:disabled{
+
+    opacity:.6;
+
+    cursor:not-allowed;
+
+}
+
+/* ==========================
+Animation
+========================== */
+
+@keyframes fade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(10px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ==========================
+Responsive
+========================== */
+
+@media(max-width:768px){
+
+.chat-header{
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:16px;
+
+}
+
+.chat-input-card{
+
+    flex-direction:column;
+
+}
+
+.chat-input-card button{
+
+    width:100%;
+
+}
+
+.message{
+
+    max-width:100%;
+
+}
+
+}

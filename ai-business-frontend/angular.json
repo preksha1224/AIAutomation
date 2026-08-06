@@ -28,27 +28,39 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss"
-            ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "security": {
-              "allowedHosts": [ "kills-watched-apartments-usa.trycloudflare.com" ]
-            },
-            "ssr": {
-              "entry": "src/server.ts"
-            }
-          },
+  "browser": "src/main.ts",
+  "tsConfig": "tsconfig.app.json",
+  "inlineStyleLanguage": "scss",
+
+  "assets": [
+    {
+      "glob": "**/*",
+      "input": "public"
+    },
+    {
+      "glob": "**/*",
+      "input": "src/assets",
+      "output": "/assets"
+    }
+  ],
+
+  "styles": [
+    "src/styles.scss"
+  ],
+
+  "server": "src/main.server.ts",
+  "outputMode": "server",
+
+  "security": {
+    "allowedHosts": [
+      "fare-cash-idle-heat.trycloudflare.com"
+    ]
+  },
+
+  "ssr": {
+    "entry": "src/server.ts"
+  }
+},
           "configurations": {
             "production": {
               "budgets": [
@@ -77,7 +89,7 @@
   "builder": "@angular/build:dev-server",
   "options": {
     "allowedHosts": [
-      "kills-watched-apartments-usa.trycloudflare.com"
+      "fare-cash-idle-heat.trycloudflare.com"
     ]
   },
   "configurations": {
