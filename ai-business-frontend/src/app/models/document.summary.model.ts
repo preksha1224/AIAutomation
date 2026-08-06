@@ -4,4 +4,7 @@ export interface DocumentSummary {
   type: string;
   status: string;
   uploadedAt: string;
+  url?: string;
+  fileUrl?: string;
+  content?: string;
 }

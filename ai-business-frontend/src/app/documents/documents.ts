@@ -1,5 +1,6 @@
 import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { finalize } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
@@ -20,6 +21,11 @@ export class Documents implements OnInit {
   searchResults: DocumentSummary[] = [];
 
   selectedDocument: DocumentSummary | null = null;
+  safePdfUrl: SafeResourceUrl | null = null;
+  isViewingModalOpen = false;
+  isLoadingView = false;
+  viewingDocId: string | null = null;
+
   selectedFile: File | null = null;
 
   search = '';
@@ -33,6 +39,7 @@ export class Documents implements OnInit {
   constructor(
     public auth: AuthService,
     private readonly documentService: DocumentService,
+    private readonly sanitizer: DomSanitizer,
     private readonly cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
@@ -71,7 +78,7 @@ export class Documents implements OnInit {
   }
 
   /**
-   * Upload & Process Document
+   * Upload & Process Document (stores & integrates with returned ID & URL)
    */
   uploadDocument(): void {
     if (!this.selectedFile || this.isUploading) {
@@ -81,40 +88,53 @@ export class Documents implements OnInit {
       return;
     }
 
+    const currentFile = this.selectedFile;
     this.isUploading = true;
-    this.statusMessage = 'Uploading document...';
+    this.statusMessage = `Uploading "${currentFile.name}"...`;
     this.cdr.detectChanges();
 
     this.documentService
-      .uploadDocument(this.selectedFile)
+      .uploadDocument(currentFile)
       .pipe(
         finalize(() => {
-          // ALWAYS reset uploading state when HTTP response returns
           this.isUploading = false;
           this.cdr.detectChanges();
         })
       )
       .subscribe({
-        next: (response) => {
-          console.log('UPLOAD SUCCESS', response);
-          this.statusMessage = 'Document uploaded successfully.';
+        next: (newDoc: DocumentSummary) => {
+          console.log('UPLOAD SUCCESS & INTEGRATED WITH ID:', newDoc);
+
+          const index = this.documents.findIndex((d) => d.id === newDoc.id);
+          if (index >= 0) {
+            this.documents[index] = newDoc;
+          } else {
+            this.documents = [newDoc, ...this.documents];
+          }
+          this.searchResults = [...this.documents];
+
+          this.statusMessage = `Document uploaded & saved! (ID: ${newDoc.id})`;
           this.selectedFile = null;
           this.resetFileInputs();
+          this.cdr.detectChanges();
+
+          // Sync with server list
           this.loadDocuments();
 
-          // Clear success status after 4 seconds
+          // Clear status after 6 seconds
           setTimeout(() => {
-            if (this.statusMessage === 'Document uploaded successfully.') {
+            if (this.statusMessage.includes('uploaded & saved')) {
               this.statusMessage = '';
               this.cdr.detectChanges();
             }
-          }, 4000);
+          }, 6000);
         },
 
         error: (error) => {
           console.error('UPLOAD ERROR', error);
           this.statusMessage = 'Upload failed. Please try again.';
           this.resetFileInputs();
+          this.cdr.detectChanges();
         },
       });
   }
@@ -126,12 +146,8 @@ export class Documents implements OnInit {
     this.isLoading = true;
 
     this.documentService.getDocuments().subscribe({
-      next: (response: any) => {
-        console.log('LIST RESPONSE:', response);
-
-        const documents = Array.isArray(response)
-          ? response
-          : response.data ?? response.items ?? [];
+      next: (documents: DocumentSummary[]) => {
+        console.log('LIST RESPONSE:', documents);
 
         this.documents = documents;
         this.searchResults = [...documents];
@@ -170,19 +186,59 @@ export class Documents implements OnInit {
   }
 
   /**
-   * Read
+   * Read / View PDF & Document Details
    */
   viewDocument(document: DocumentSummary): void {
+    this.viewingDocId = document.id;
+    this.isLoadingView = true;
+    this.selectedDocument = document;
+    this.safePdfUrl = null;
+    this.isViewingModalOpen = true;
+
+    const initialUrl = document.url || document.fileUrl;
+    if (initialUrl) {
+      this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(initialUrl);
+    }
+
     this.documentService.getDocument(document.id).subscribe({
-      next: (response) => {
-        this.selectedDocument = response;
+      next: (fullDoc) => {
+        console.log('VIEW DOCUMENT SUCCESS:', fullDoc);
+        this.selectedDocument = { ...document, ...fullDoc };
+
+        const targetUrl = fullDoc.url || fullDoc.fileUrl || document.url || document.fileUrl;
+        if (targetUrl) {
+          this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(targetUrl);
+        }
+
+        this.isLoadingView = false;
+        this.viewingDocId = null;
         this.cdr.detectChanges();
       },
 
       error: (error) => {
-        console.error(error);
+        console.error('Error fetching document view details:', error);
+        this.isLoadingView = false;
+        this.viewingDocId = null;
+        this.cdr.detectChanges();
       },
     });
+  }
+
+  closeViewModal(): void {
+    this.isViewingModalOpen = false;
+    this.selectedDocument = null;
+    this.safePdfUrl = null;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Open PDF URL in a new browser window/tab
+   */
+  openPdfExternal(): void {
+    const url = this.selectedDocument?.url || this.selectedDocument?.fileUrl;
+    if (url) {
+      window.open(url, '_blank');
+    }
   }
 
   /**

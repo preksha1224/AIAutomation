@@ -4,7 +4,7 @@
       type="text"
       [(ngModel)]="search"
       (keyup.enter)="runSearch()"
-      placeholder="Search documents..." />
+      placeholder="Search documents by name or ID..." />
 
     <button
       type="button"
@@ -107,7 +107,12 @@
           <tr *ngFor="let document of searchResults">
             <td>
               <strong>{{ document.name }}</strong>
-              <div>{{ document.type }}</div>
+              <div class="doc-meta-info">
+                <span class="doc-type-tag">{{ document.type }}</span>
+                <span class="doc-id-tag" *ngIf="document.id" title="Document ID">
+                  ID: {{ document.id }}
+                </span>
+              </div>
             </td>
 
             <td>
@@ -126,9 +131,11 @@
             <td>
               <button
                 type="button"
-                class="button-secondary"
+                class="button-secondary action-view-btn"
+                [disabled]="isLoadingView && viewingDocId === document.id"
                 (click)="viewDocument(document)">
-                View
+                <span *ngIf="isLoadingView && viewingDocId === document.id" class="spinner-sm-dark"></span>
+                <span>{{ (isLoadingView && viewingDocId === document.id) ? 'Loading...' : '👁 View' }}</span>
               </button>
 
               <button
@@ -156,4 +163,83 @@
       </table>
     </div>
   </section>
+
+  <!-- PDF & Document Viewer Modal -->
+  <div class="modal-backdrop" *ngIf="isViewingModalOpen" (click)="closeViewModal()">
+    <div class="pdf-modal-card" (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📄</span>
+          <div>
+            <h3>{{ selectedDocument?.name }}</h3>
+            <div class="modal-meta">
+              <span class="badge-type">{{ selectedDocument?.type }}</span>
+              <span class="badge-id" *ngIf="selectedDocument?.id">ID: {{ selectedDocument?.id }}</span>
+              <span class="badge-status">{{ selectedDocument?.status }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-header-actions">
+          <button 
+            type="button" 
+            class="button-secondary external-btn"
+            *ngIf="selectedDocument?.url || selectedDocument?.fileUrl"
+            (click)="openPdfExternal()">
+            Open PDF ↗
+          </button>
+
+          <button type="button" class="close-btn" (click)="closeViewModal()">✕</button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        
+        <!-- Loading State inside Modal -->
+        <div class="modal-loading" *ngIf="isLoadingView">
+          <div class="spinner-large"></div>
+          <p>Fetching document content...</p>
+        </div>
+
+        <!-- PDF Embedded Viewer (if URL exists) -->
+        <div class="pdf-viewer-container" *ngIf="!isLoadingView && safePdfUrl">
+          <iframe 
+            [src]="safePdfUrl" 
+            class="pdf-iframe" 
+            title="PDF Document Viewer">
+          </iframe>
+        </div>
+
+        <!-- Text Content Viewer (if no PDF URL but text content is available) -->
+        <div class="doc-text-container" *ngIf="!isLoadingView && !safePdfUrl && selectedDocument?.content">
+          <h4>Extracted Document Content</h4>
+          <pre class="content-pre">{{ selectedDocument?.content }}</pre>
+        </div>
+
+        <!-- Fallback Document Info Card (if no iframe URL) -->
+        <div class="doc-fallback-container" *ngIf="!isLoadingView && !safePdfUrl && !selectedDocument?.content">
+          <div class="fallback-icon">📑</div>
+          <h4>{{ selectedDocument?.name }}</h4>
+          <p>Document ID: <code>{{ selectedDocument?.id }}</code></p>
+          <p class="fallback-hint">Document is ready and stored in your AI workspace database.</p>
+          
+          <div class="fallback-actions">
+            <button 
+              type="button" 
+              class="button-primary"
+              *ngIf="selectedDocument?.url || selectedDocument?.fileUrl"
+              (click)="openPdfExternal()">
+              Download / Open PDF ↗
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
 </div>

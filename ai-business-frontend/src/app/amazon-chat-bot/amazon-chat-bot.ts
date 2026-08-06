@@ -1,14 +1,6 @@
 import { Component } from '@angular/core';
 import { catchError, finalize, of, timeout } from 'rxjs';
-import { ChatService } from '../services/chat.service';
-
-interface ChatApiResponse {
-  answer?: string;
-  text?: string;
-  result?: string;
-  message?: string;
-  [key: string]: any;
-}
+import { ChatService, ChatResponse } from '../services/chat.service';
 
 @Component({
   selector: 'app-amazon-chat-bot',
@@ -17,7 +9,6 @@ interface ChatApiResponse {
   styleUrl: './amazon-chat-bot.scss',
 })
 export class AmazonChatBot {
-
   prompt = '';
 
   conversation: Array<{
@@ -32,7 +23,7 @@ export class AmazonChatBot {
   sendMessage(): void {
     const message = this.prompt.trim();
 
-    if (!message) {
+    if (!message || this.loading) {
       return;
     }
 
@@ -45,25 +36,24 @@ export class AmazonChatBot {
     this.loading = true;
 
     this.amazonChatService
-      .sendMessage(message)
+      .sendAmazonMessage(message)
       .pipe(
-        timeout(20000),
+        timeout(15000),
         catchError((error) => {
           console.error('Amazon Chat Error:', error);
-
           return of({
-            answer: 'Unable to reach the Amazon AI service.',
-          } as ChatApiResponse);
+            answer: 'Unable to reach the Amazon AI service. Please check your connection or backend webhook.',
+          } as ChatResponse);
         }),
         finalize(() => (this.loading = false))
       )
-      .subscribe((response: ChatApiResponse) => {
+      .subscribe((response: ChatResponse) => {
         const assistantReply =
           response.answer ??
           response.text ??
           response.result ??
           response.message ??
-          'No response received.';
+          (typeof response === 'string' ? response : 'No response received.');
 
         this.conversation.push({
           role: 'assistant',
