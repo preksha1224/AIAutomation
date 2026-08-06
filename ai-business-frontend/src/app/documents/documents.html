@@ -1,110 +1,99 @@
 <div>
-    <section class="search-card">
-
+  <section class="search-card">
     <input
       type="text"
       [(ngModel)]="search"
+      (keyup.enter)="runSearch()"
       placeholder="Search documents..." />
 
     <button
+      type="button"
       class="button-primary"
       (click)="runSearch()">
       Search
     </button>
-
   </section>
 
   <section class="upload-panel">
-
     <div class="upload-panel-header">
       <div>
         <h2>Upload Document</h2>
-        <p>Drag & Drop or choose a file.</p>
+        <p>Drag & Drop or choose a file to process with AI.</p>
       </div>
 
-      <span class="status-tag">
+      <span class="status-tag" [class.uploading]="isUploading">
         {{ statusMessage || 'Ready to upload' }}
       </span>
     </div>
 
     <label class="upload-dropzone">
-
       <input
+        #dropzoneInput
         type="file"
         accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+        [disabled]="isUploading"
         (change)="selectFile($event)" />
 
       <div class="upload-dropzone-inner">
         <div class="upload-icon">⬆</div>
-
         <h3>Drop files here</h3>
-
         <p>PDF • DOCX • XLSX • PNG • JPG</p>
       </div>
-
     </label>
 
     <div class="upload-summary">
-
-      <button class="button-secondary">
+      <button type="button" class="button-secondary" [disabled]="isUploading">
         Choose File
-
         <input
+          #summaryInput
           type="file"
           accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+          [disabled]="isUploading"
           (change)="selectFile($event)" />
       </button>
 
       <button
-        class="button-primary"
+        type="button"
+        class="button-primary upload-btn"
         (click)="uploadDocument()"
         [disabled]="!selectedFile || isUploading">
-
-        {{ isUploading ? 'Uploading...' : 'Upload & Process' }}
-
+        
+        <span *ngIf="isUploading" class="spinner-inline"></span>
+        <span>{{ isUploading ? 'Uploading...' : 'Upload & Process' }}</span>
       </button>
 
-      <span>
+      <span class="selected-file-label">
         <ng-container *ngIf="selectedFile; else noFile">
-          {{ selectedFile.name }}
+          📄 {{ selectedFile.name }}
         </ng-container>
 
         <ng-template #noFile>
           No file selected
         </ng-template>
-
       </span>
-
     </div>
-
   </section>
 
   <section class="files-panel">
-
     <div class="files-header">
-
       <div>
         <h2>Recent Documents</h2>
-
         <p>
-          {{ searchResults.length ? searchResults.length : documents.length }}
-          Files
+          {{ searchResults.length ? searchResults.length : documents.length }} Files
         </p>
-
       </div>
 
       <button
+        type="button"
         class="button-secondary"
+        [disabled]="isLoading"
         (click)="loadDocuments()">
-        Refresh
+        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
       </button>
-
     </div>
 
     <div class="table-scroll">
-
       <table>
-
         <thead>
           <tr>
             <th>Document</th>
@@ -115,61 +104,56 @@
         </thead>
 
         <tbody>
-
-          <tr
-            *ngFor="let document of searchResults">
-
+          <tr *ngFor="let document of searchResults">
             <td>
               <strong>{{ document.name }}</strong>
               <div>{{ document.type }}</div>
             </td>
 
             <td>
-
               <span
                 class="status-badge"
                 [ngClass]="{
-                    processed: document.status === 'Processed',
-                    pending: document.status !== 'Processed'
+                  processed: document.status === 'Processed',
+                  pending: document.status !== 'Processed'
                 }">
-
                 {{ document.status }}
-
               </span>
-
             </td>
 
             <td>{{ document.uploadedAt }}</td>
 
             <td>
-
               <button
+                type="button"
                 class="button-secondary"
                 (click)="viewDocument(document)">
                 View
               </button>
 
               <button
+                type="button"
                 class="button-secondary"
                 (click)="editDocument(document)">
                 Rename
               </button>
 
               <button
+                type="button"
                 class="button-danger"
                 (click)="deleteDocument(document)">
                 Delete
               </button>
-
             </td>
-
           </tr>
 
+          <tr *ngIf="searchResults.length === 0 && !isLoading">
+            <td colspan="4" style="text-align: center; color: #64748b; padding: 24px;">
+              No documents found.
+            </td>
+          </tr>
         </tbody>
-
       </table>
-
     </div>
-
   </section>
 </div>

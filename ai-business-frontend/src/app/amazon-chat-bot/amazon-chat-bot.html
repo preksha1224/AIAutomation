@@ -1,76 +1,126 @@
 <section class="chat-page">
 
-  <!-- Header -->
+  <!-- Amazon Chat Mode Header -->
   <div class="chat-header">
 
-    <div>
-      <h1>🤖 AI Assistant</h1>
-      <p>Ask questions about your uploaded documents and automation workflows.</p>
+    <div class="header-left">
+      <div class="amazon-logo-badge">
+        <span class="aws-icon">a</span>
+        <span class="smile-arrow"></span>
+      </div>
+      <div class="header-titles">
+        <div class="brand-row">
+          <h1>Amazon Chat</h1>
+          <span class="amazon-badge">AWS Bedrock AI</span>
+        </div>
+        <p>Ask questions about your uploaded documents, Amazon inventory, and business workflows.</p>
+      </div>
     </div>
 
     <div class="chat-status">
       <span class="status-dot"></span>
-      AI Online
+      <span>AI Online</span>
     </div>
 
   </div>
 
-  <!-- Conversation -->
-
+  <!-- Conversation Container -->
   <div class="conversation-card">
 
-    <div class="conversation">
+    <!-- Empty / Welcome State when conversation has no messages yet -->
+    <div class="empty-state" *ngIf="conversation.length === 0">
+      <div class="welcome-avatar">
+        <span class="amazon-smile-icon">📦</span>
+      </div>
+      <h2>Welcome to Amazon AI Chat</h2>
+      <p>How can I assist your business today?</p>
+
+      <div class="welcome-features">
+        <div class="feature-pill">📦 Inventory & Stock Q&A</div>
+        <div class="feature-pill">📊 Sales & Revenue Trends</div>
+        <div class="feature-pill">🚚 FBA Logistics Tracking</div>
+        <div class="feature-pill">📑 Document Rule Extraction</div>
+      </div>
+    </div>
+
+    <!-- Active Conversation -->
+    <div class="conversation" *ngIf="conversation.length > 0">
 
       <div
-        class="message"
+        class="message-row"
         *ngFor="let message of conversation"
         [ngClass]="message.role">
 
-        <div class="message-header">
+        <div class="message">
 
-          <div class="avatar">
+          <div class="message-header">
 
-            {{ message.role === 'user' ? '👤' : '🤖' }}
+            <div class="avatar">
+              {{ message.role === 'user' ? '👤' : '📦' }}
+            </div>
+
+            <span class="author-label">
+              {{ message.role === 'user' ? 'You' : 'Amazon AI Assistant' }}
+            </span>
 
           </div>
 
-          <span>
-
-            {{ message.role === 'user' ? 'You' : 'AI Assistant' }}
-
-          </span>
+          <div class="message-content">
+            <p>{{ message.content }}</p>
+          </div>
 
         </div>
 
-        <p>
+      </div>
 
-          {{ message.content }}
-
-        </p>
-
+      <!-- Loading Indicator -->
+      <div class="message-row assistant loading-row" *ngIf="loading">
+        <div class="message">
+          <div class="message-header">
+            <div class="avatar loading-avatar">📦</div>
+            <span class="author-label">Amazon AI is thinking...</span>
+          </div>
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
       </div>
 
     </div>
 
   </div>
 
-  <!-- Input -->
-
+  <!-- Chat Input Footer -->
   <form
     class="chat-input-card"
     (ngSubmit)="sendMessage()">
 
-    <input
-      type="text"
-      [(ngModel)]="prompt"
-      name="prompt"
-      placeholder="Ask anything about your documents..." />
+    <div class="input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        [(ngModel)]="prompt"
+        name="prompt"
+        [disabled]="loading"
+        placeholder="Ask anything about your documents or Amazon store..."
+        autocomplete="off" />
+    </div>
 
     <button
       type="submit"
-      [disabled]="loading">
+      class="amazon-send-btn"
+      [disabled]="loading || !prompt.trim()">
+      
+      <span *ngIf="!loading">
+        {{ prompt.trim() ? 'Send Message ➔' : 'Send' }}
+      </span>
 
-      {{ loading ? 'Sending...' : 'Send' }}
+      <span *ngIf="loading" class="btn-spinner-wrapper">
+        <span class="btn-spinner"></span>
+        <span>Sending...</span>
+      </span>
 
     </button>
 

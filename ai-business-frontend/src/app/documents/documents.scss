@@ -81,6 +81,12 @@
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
+  transition: all 0.2s ease;
+
+  &.uploading {
+    background: #fef3c7;
+    color: #d97706;
+  }
 }
 
 /* ===========================
@@ -160,8 +166,36 @@
   color: white;
 }
 
-.button-primary:hover {
+.button-primary:hover:not(:disabled) {
   transform: translateY(-2px);
+}
+
+.button-primary:disabled,
+.button-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner-inline {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .button-secondary {

@@ -1,5 +1,6 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { finalize } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { DocumentService } from '../services/document.service';
@@ -12,6 +13,8 @@ import { DocumentSummary } from '../models/document.summary.model';
   styleUrl: './documents.scss',
 })
 export class Documents implements OnInit {
+  @ViewChild('dropzoneInput') dropzoneInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('summaryInput') summaryInput!: ElementRef<HTMLInputElement>;
 
   documents: DocumentSummary[] = [];
   searchResults: DocumentSummary[] = [];
@@ -20,7 +23,6 @@ export class Documents implements OnInit {
   selectedFile: File | null = null;
 
   search = '';
-
   statusMessage = '';
 
   isUploading = false;
@@ -31,188 +33,163 @@ export class Documents implements OnInit {
   constructor(
     public auth: AuthService,
     private readonly documentService: DocumentService,
+    private readonly cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
   ngOnInit(): void {
-
     if (this.isBrowser) {
       this.loadDocuments();
     }
-
   }
 
   /**
    * Select File
    */
   selectFile(event: Event): void {
-
     const input = event.target as HTMLInputElement;
 
     if (input.files?.length) {
       this.selectedFile = input.files[0];
       this.statusMessage = '';
+      this.cdr.detectChanges();
     }
-
   }
 
   /**
-   * Upload
+   * Reset file inputs in DOM
+   */
+  private resetFileInputs(): void {
+    if (this.dropzoneInput?.nativeElement) {
+      this.dropzoneInput.nativeElement.value = '';
+    }
+    if (this.summaryInput?.nativeElement) {
+      this.summaryInput.nativeElement.value = '';
+    }
+  }
+
+  /**
+   * Upload & Process Document
    */
   uploadDocument(): void {
-
-    if (!this.selectedFile) {
-
-      this.statusMessage = 'Please select a file.';
+    if (!this.selectedFile || this.isUploading) {
+      if (!this.selectedFile) {
+        this.statusMessage = 'Please select a file to upload.';
+      }
       return;
-
     }
 
     this.isUploading = true;
     this.statusMessage = 'Uploading document...';
+    this.cdr.detectChanges();
 
-    this.documentService.uploadDocument(this.selectedFile).subscribe({
+    this.documentService
+      .uploadDocument(this.selectedFile)
+      .pipe(
+        finalize(() => {
+          // ALWAYS reset uploading state when HTTP response returns
+          this.isUploading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('UPLOAD SUCCESS', response);
+          this.statusMessage = 'Document uploaded successfully.';
+          this.selectedFile = null;
+          this.resetFileInputs();
+          this.loadDocuments();
 
-      next: (response) => {
+          // Clear success status after 4 seconds
+          setTimeout(() => {
+            if (this.statusMessage === 'Document uploaded successfully.') {
+              this.statusMessage = '';
+              this.cdr.detectChanges();
+            }
+          }, 4000);
+        },
 
-        console.log('UPLOAD SUCCESS');
-        console.log(response);
-
-        this.isUploading = false;
-        this.statusMessage = 'Document uploaded successfully.';
-
-        this.selectedFile = null;
-
-        /**
-         * Reload list
-         */
-        this.loadDocuments();
-
-      },
-
-      error: (error) => {
-
-        console.error('UPLOAD ERROR');
-        console.error(error);
-
-        this.isUploading = false;
-        this.statusMessage = 'Upload failed.';
-
-      }
-
-    });
-
+        error: (error) => {
+          console.error('UPLOAD ERROR', error);
+          this.statusMessage = 'Upload failed. Please try again.';
+          this.resetFileInputs();
+        },
+      });
   }
 
   /**
    * List Documents
    */
-loadDocuments(): void {
+  loadDocuments(): void {
+    this.isLoading = true;
 
-  this.isLoading = true;
+    this.documentService.getDocuments().subscribe({
+      next: (response: any) => {
+        console.log('LIST RESPONSE:', response);
 
-  this.documentService.getDocuments().subscribe({
+        const documents = Array.isArray(response)
+          ? response
+          : response.data ?? response.items ?? [];
 
-    next: (response: any) => {
+        this.documents = documents;
+        this.searchResults = [...documents];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
 
-      console.log('======================');
-      console.log('LIST RESPONSE');
-      console.log(response);
-      console.log('======================');
-
-      const documents = Array.isArray(response)
-        ? response
-        : response.data ?? response.items ?? [];
-
-      this.documents = documents;
-      this.searchResults = [...documents];
-
-      console.log('Documents:', this.documents);
-      console.log('Length:', this.documents.length);
-
-      this.isLoading = false;
-
-    },
-
-    error: (error) => {
-
-      console.error(error);
-
-      this.isLoading = false;
-      this.statusMessage = 'Unable to load documents.';
-
-    }
-
-  });
-
-}
+      error: (error) => {
+        console.error('LIST ERROR:', error);
+        this.isLoading = false;
+        this.statusMessage = 'Unable to load documents.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
 
   /**
    * Search
    */
   runSearch(): void {
-
     if (!this.search.trim()) {
-
       this.searchResults = [...this.documents];
       return;
-
     }
 
     this.documentService.searchDocuments(this.search).subscribe({
-
       next: (documents) => {
-
         this.searchResults = documents;
-
+        this.cdr.detectChanges();
       },
 
       error: (error) => {
-
         console.error(error);
-
-      }
-
+      },
     });
-
   }
 
   /**
    * Read
    */
   viewDocument(document: DocumentSummary): void {
-
     this.documentService.getDocument(document.id).subscribe({
-
       next: (response) => {
-
-        console.log(response);
-
         this.selectedDocument = response;
-
+        this.cdr.detectChanges();
       },
 
       error: (error) => {
-
         console.error(error);
-
-      }
-
+      },
     });
-
   }
 
   /**
    * Update
    */
   editDocument(document: DocumentSummary): void {
-
-    const newName = prompt(
-      'Enter new document name',
-      document.name
-    );
+    const newName = prompt('Enter new document name', document.name);
 
     if (!newName?.trim()) {
       return;
@@ -221,66 +198,40 @@ loadDocuments(): void {
     this.documentService
       .updateDocument(document.id, newName.trim())
       .subscribe({
-
-        next: (response) => {
-
-          console.log(response);
-
+        next: () => {
           this.statusMessage = 'Document updated successfully.';
-
           this.loadDocuments();
-
         },
 
         error: (error) => {
-
           console.error(error);
-
-        }
-
+        },
       });
-
   }
 
   /**
    * Delete
    */
   deleteDocument(document: DocumentSummary): void {
-
-    const confirmed = confirm(
-      `Delete "${document.name}"?`
-    );
+    const confirmed = confirm(`Delete "${document.name}"?`);
 
     if (!confirmed) {
       return;
     }
 
     this.documentService.deleteDocument(document.id).subscribe({
-
-      next: (response) => {
-
-        console.log(response);
-
+      next: () => {
         this.statusMessage = 'Document deleted successfully.';
-
         this.loadDocuments();
-
       },
 
       error: (error) => {
-
         console.error(error);
-
-      }
-
+      },
     });
-
   }
 
   logout(): void {
-
     this.auth.logout();
-
   }
-
 }
