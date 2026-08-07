@@ -153,6 +153,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: .2s;
+  white-space: nowrap;
 }
 
 .button-primary {
@@ -235,6 +236,10 @@ thead th {
   padding: 12px;
 }
 
+thead th:last-child {
+  text-align: center;
+}
+
 tbody tr {
   background: white;
   box-shadow: 0 4px 16px rgba(15,23,42,.06);
@@ -247,6 +252,7 @@ tbody tr:hover {
 
 tbody td {
   padding: 18px 12px;
+  vertical-align: middle;
 }
 
 tbody td:first-child {
@@ -255,6 +261,18 @@ tbody td:first-child {
 
 tbody td:last-child {
   border-radius: 0 12px 12px 0;
+}
+
+.document-name {
+  display: block;
+  margin-bottom: 6px;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.document-type {
+  color: #64748b;
+  font-size: 14px;
 }
 
 /* ===========================
@@ -279,6 +297,47 @@ tbody td:last-child {
   color: #92400e;
 }
 
+.actions-group {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+  padding: 11px 18px;
+  border-radius: 14px;
+}
+
+.action-emoji {
+  line-height: 1;
+}
+
+.action-button.button-secondary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.action-button.button-secondary:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.action-button.button-danger {
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+.action-button.button-danger:hover {
+  background: #ffe4e6;
+}
+
 /* ===========================
    Responsive
 =========================== */
@@ -297,6 +356,14 @@ tbody td:last-child {
   .button-secondary,
   .button-danger{
     width:100%;
+  }
+
+  .actions-group {
+    justify-content: stretch;
+  }
+
+  .action-button {
+    min-width: 0;
   }
 
   table{

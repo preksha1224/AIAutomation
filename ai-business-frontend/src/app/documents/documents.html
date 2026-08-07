@@ -1,4 +1,4 @@
-<div>
+<div class="documents-container">
     <section class="search-card">
 
     <input
@@ -30,8 +30,10 @@
     <label class="upload-dropzone">
 
       <input
+        #fileInput
         type="file"
         accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+        [disabled]="isUploading"
         (change)="selectFile($event)" />
 
       <div class="upload-dropzone-inner">
@@ -50,8 +52,10 @@
         Choose File
 
         <input
+          #fileInput
           type="file"
           accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+          [disabled]="isUploading"
           (change)="selectFile($event)" />
       </button>
 
@@ -109,7 +113,6 @@
           <tr>
             <th>Document</th>
             <th>Status</th>
-            <th>Uploaded</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -119,9 +122,9 @@
           <tr
             *ngFor="let document of searchResults">
 
-            <td>
-              <strong>{{ document.name }}</strong>
-              <div>{{ document.type }}</div>
+            <td class="document-cell">
+              <strong class="document-name">{{ document.name }}</strong>
+              <div class="document-type">{{ document.type }}</div>
             </td>
 
             <td>
@@ -139,28 +142,30 @@
 
             </td>
 
-            <td>{{ document.uploadedAt }}</td>
-
-            <td>
-
+            <td class="actions-cell">
+              <div class="actions-group">
               <button
-                class="button-secondary"
+                class="button-secondary action-button"
                 (click)="viewDocument(document)">
+                <span class="action-emoji" aria-hidden="true">👁</span>
                 View
               </button>
-
+ 
               <button
-                class="button-secondary"
+                class="button-secondary action-button"
                 (click)="editDocument(document)">
+                <span class="action-emoji" aria-hidden="true">✏️</span>
                 Rename
               </button>
-
+ 
               <button
-                class="button-danger"
+                class="button-danger action-button"
                 (click)="deleteDocument(document)">
+                <span class="action-emoji" aria-hidden="true">🗑</span>
                 Delete
               </button>
-
+              </div>
+ 
             </td>
 
           </tr>

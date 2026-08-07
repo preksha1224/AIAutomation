@@ -9,6 +9,8 @@ interface UploadedDocument {
   type: string;
   status: string;
   uploadedAt: string;
+  fileUrl?: string;
+  url?: string;
 }
 
 @Component({
@@ -111,13 +113,34 @@ export class DashboardComponent implements OnInit {
   }
 
   viewDocument(document: UploadedDocument): void {
+    const existingUrl = this.getDocumentUrl(document);
+
+    if (existingUrl) {
+      this.openDocument(existingUrl);
+      return;
+    }
+
+    const previewWindow = this.isBrowser ? window.open('', '_blank') : null;
+
     this.documentService.getDocument(document.id).subscribe({
       next: (doc) => {
         this.selectedDocument = doc;
+
+        const documentUrl = this.getDocumentUrl(doc);
+
+        if (documentUrl) {
+          this.openDocument(documentUrl, previewWindow);
+          return;
+        }
+
+        previewWindow?.close();
+        this.statusMessage = 'Document preview is not available yet.';
       },
 
       error: (err: any) => {
         console.error(err);
+        previewWindow?.close();
+        this.statusMessage = 'Unable to load document preview.';
       },
     });
   }
@@ -162,5 +185,34 @@ export class DashboardComponent implements OnInit {
 
   logout(): void {
     this.auth.logout();
+  }
+
+  private getDocumentUrl(document: Partial<UploadedDocument>): string | null {
+    if (typeof document.fileUrl === 'string' && document.fileUrl.trim()) {
+      return document.fileUrl;
+    }
+
+    if (typeof document.url === 'string' && document.url.trim()) {
+      return document.url;
+    }
+
+    return null;
+  }
+
+  private openDocument(url: string, previewWindow?: Window | null): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    const targetWindow = previewWindow ?? window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (!targetWindow) {
+      this.statusMessage = 'Unable to open document preview.';
+      return;
+    }
+
+    if (previewWindow) {
+      previewWindow.location.href = url;
+    }
   }
 }
