@@ -1,36 +1,44 @@
+<<<<<<< HEAD
 <div class="documents-container">
     <section class="search-card">
 
+=======
+<div>
+  <section class="search-card">
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     <input
       type="text"
       [(ngModel)]="search"
-      placeholder="Search documents..." />
+      (keyup.enter)="runSearch()"
+      placeholder="Search documents by name or ID..." />
 
     <button
+      type="button"
       class="button-primary"
       (click)="runSearch()">
       Search
     </button>
-
   </section>
 
   <section class="upload-panel">
-
     <div class="upload-panel-header">
       <div>
         <h2>Upload Document</h2>
-        <p>Drag & Drop or choose a file.</p>
+        <p>Drag & Drop or choose a file to process with AI.</p>
       </div>
 
-      <span class="status-tag">
+      <span class="status-tag" [class.uploading]="isUploading">
         {{ statusMessage || 'Ready to upload' }}
       </span>
     </div>
 
     <label class="upload-dropzone">
-
       <input
+<<<<<<< HEAD
         #fileInput
+=======
+        #dropzoneInput
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
         type="file"
         accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
         [disabled]="isUploading"
@@ -38,21 +46,20 @@
 
       <div class="upload-dropzone-inner">
         <div class="upload-icon">⬆</div>
-
         <h3>Drop files here</h3>
-
         <p>PDF • DOCX • XLSX • PNG • JPG</p>
       </div>
-
     </label>
 
     <div class="upload-summary">
-
-      <button class="button-secondary">
+      <button type="button" class="button-secondary" [disabled]="isUploading">
         Choose File
-
         <input
+<<<<<<< HEAD
           #fileInput
+=======
+          #summaryInput
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
           type="file"
           accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
           [disabled]="isUploading"
@@ -60,55 +67,47 @@
       </button>
 
       <button
-        class="button-primary"
+        type="button"
+        class="button-primary upload-btn"
         (click)="uploadDocument()"
         [disabled]="!selectedFile || isUploading">
-
-        {{ isUploading ? 'Uploading...' : 'Upload & Process' }}
-
+        
+        <span *ngIf="isUploading" class="spinner-inline"></span>
+        <span>{{ isUploading ? 'Uploading...' : 'Upload & Process' }}</span>
       </button>
 
-      <span>
+      <span class="selected-file-label">
         <ng-container *ngIf="selectedFile; else noFile">
-          {{ selectedFile.name }}
+          📄 {{ selectedFile.name }}
         </ng-container>
 
         <ng-template #noFile>
           No file selected
         </ng-template>
-
       </span>
-
     </div>
-
   </section>
 
   <section class="files-panel">
-
     <div class="files-header">
-
       <div>
         <h2>Recent Documents</h2>
-
         <p>
-          {{ searchResults.length ? searchResults.length : documents.length }}
-          Files
+          {{ searchResults.length ? searchResults.length : documents.length }} Files
         </p>
-
       </div>
 
       <button
+        type="button"
         class="button-secondary"
+        [disabled]="isLoading"
         (click)="loadDocuments()">
-        Refresh
+        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
       </button>
-
     </div>
 
     <div class="table-scroll">
-
       <table>
-
         <thead>
           <tr>
             <th>Document</th>
@@ -118,6 +117,7 @@
         </thead>
 
         <tbody>
+<<<<<<< HEAD
 
           <tr
             *ngFor="let document of searchResults">
@@ -125,23 +125,31 @@
             <td class="document-cell">
               <strong class="document-name">{{ document.name }}</strong>
               <div class="document-type">{{ document.type }}</div>
+=======
+          <tr *ngFor="let document of searchResults">
+            <td>
+              <strong>{{ document.name }}</strong>
+              <div class="doc-meta-info">
+                <span class="doc-type-tag">{{ document.type }}</span>
+                <span class="doc-id-tag" *ngIf="document.id" title="Document ID">
+                  ID: {{ document.id }}
+                </span>
+              </div>
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
             </td>
 
             <td>
-
               <span
                 class="status-badge"
                 [ngClass]="{
-                    processed: document.status === 'Processed',
-                    pending: document.status !== 'Processed'
+                  processed: document.status === 'Processed',
+                  pending: document.status !== 'Processed'
                 }">
-
                 {{ document.status }}
-
               </span>
-
             </td>
 
+<<<<<<< HEAD
             <td class="actions-cell">
               <div class="actions-group">
               <button
@@ -149,32 +157,137 @@
                 (click)="viewDocument(document)">
                 <span class="action-emoji" aria-hidden="true">👁</span>
                 View
+=======
+            <td>{{ document.uploadedAt }}</td>
+
+            <td>
+              <button
+                type="button"
+                class="button-secondary action-view-btn"
+                [disabled]="isLoadingView && viewingDocId === document.id"
+                (click)="viewDocument(document)">
+                <span *ngIf="isLoadingView && viewingDocId === document.id" class="spinner-sm-dark"></span>
+                <span>{{ (isLoadingView && viewingDocId === document.id) ? 'Loading...' : '👁 View' }}</span>
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
               </button>
  
               <button
+<<<<<<< HEAD
                 class="button-secondary action-button"
+=======
+                type="button"
+                class="button-secondary"
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
                 (click)="editDocument(document)">
                 <span class="action-emoji" aria-hidden="true">✏️</span>
                 Rename
               </button>
  
               <button
+<<<<<<< HEAD
                 class="button-danger action-button"
+=======
+                type="button"
+                class="button-danger"
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
                 (click)="deleteDocument(document)">
                 <span class="action-emoji" aria-hidden="true">🗑</span>
                 Delete
               </button>
+<<<<<<< HEAD
               </div>
  
+=======
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
             </td>
-
           </tr>
 
+          <tr *ngIf="searchResults.length === 0 && !isLoading">
+            <td colspan="4" style="text-align: center; color: #64748b; padding: 24px;">
+              No documents found.
+            </td>
+          </tr>
         </tbody>
-
       </table>
+    </div>
+  </section>
+
+  <!-- PDF & Document Viewer Modal -->
+  <div class="modal-backdrop" *ngIf="isViewingModalOpen" (click)="closeViewModal()">
+    <div class="pdf-modal-card" (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📄</span>
+          <div>
+            <h3>{{ selectedDocument?.name }}</h3>
+            <div class="modal-meta">
+              <span class="badge-type">{{ selectedDocument?.type }}</span>
+              <span class="badge-id" *ngIf="selectedDocument?.id">ID: {{ selectedDocument?.id }}</span>
+              <span class="badge-status">{{ selectedDocument?.status }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-header-actions">
+          <button 
+            type="button" 
+            class="button-secondary external-btn"
+            *ngIf="selectedDocument?.url || selectedDocument?.fileUrl"
+            (click)="openPdfExternal()">
+            Open PDF ↗
+          </button>
+
+          <button type="button" class="close-btn" (click)="closeViewModal()">✕</button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        
+        <!-- Loading State inside Modal -->
+        <div class="modal-loading" *ngIf="isLoadingView">
+          <div class="spinner-large"></div>
+          <p>Fetching document content...</p>
+        </div>
+
+        <!-- PDF Embedded Viewer (if URL exists) -->
+        <div class="pdf-viewer-container" *ngIf="!isLoadingView && safePdfUrl">
+          <iframe 
+            [src]="safePdfUrl" 
+            class="pdf-iframe" 
+            title="PDF Document Viewer">
+          </iframe>
+        </div>
+
+        <!-- Text Content Viewer (if no PDF URL but text content is available) -->
+        <div class="doc-text-container" *ngIf="!isLoadingView && !safePdfUrl && selectedDocument?.content">
+          <h4>Extracted Document Content</h4>
+          <pre class="content-pre">{{ selectedDocument?.content }}</pre>
+        </div>
+
+        <!-- Fallback Document Info Card (if no iframe URL) -->
+        <div class="doc-fallback-container" *ngIf="!isLoadingView && !safePdfUrl && !selectedDocument?.content">
+          <div class="fallback-icon">📑</div>
+          <h4>{{ selectedDocument?.name }}</h4>
+          <p>Document ID: <code>{{ selectedDocument?.id }}</code></p>
+          <p class="fallback-hint">Document is ready and stored in your AI workspace database.</p>
+          
+          <div class="fallback-actions">
+            <button 
+              type="button" 
+              class="button-primary"
+              *ngIf="selectedDocument?.url || selectedDocument?.fileUrl"
+              (click)="openPdfExternal()">
+              Download / Open PDF ↗
+            </button>
+          </div>
+        </div>
+
+      </div>
 
     </div>
+  </div>
 
-  </section>
 </div>

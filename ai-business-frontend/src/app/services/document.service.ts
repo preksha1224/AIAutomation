@@ -229,9 +229,10 @@ export class DocumentService {
   }
 
   /**
-   * CREATE
+   * CREATE - Uploads file and maps the returned document ID & URL details
    */
   uploadDocument(file: File): Observable<DocumentSummary> {
+<<<<<<< HEAD
     return this.send({
       operation: DocumentOperation.CREATE,
       file,
@@ -245,6 +246,31 @@ export class DocumentService {
 
         return document;
       }),
+=======
+    return this.send<any>({
+      operation: DocumentOperation.CREATE,
+      file,
+    }).pipe(
+      map((response: any) => {
+        console.log('UPLOAD RAW RESPONSE:', response);
+        const item = Array.isArray(response) ? response[0] : response;
+        const raw = item?.data ?? item?.item ?? item ?? {};
+
+        const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+        const pdfUrl = raw.url ?? raw.file_url ?? raw.pdf_url ?? raw.download_url ?? raw.link ?? raw.fileUrl ?? '';
+
+        return {
+          id: String(raw.id ?? raw.document_id ?? raw.documentId ?? `doc_${Date.now()}`),
+          name: raw.name ?? raw.file_name ?? raw.filename ?? file.name,
+          type: raw.type ?? raw.file_type ?? ext,
+          status: raw.status ?? 'Processed',
+          uploadedAt: raw.uploadedAt ?? raw.uploaded_at ?? raw.created_at ?? new Date().toLocaleDateString(),
+          url: pdfUrl,
+          fileUrl: pdfUrl,
+          content: raw.content ?? raw.text ?? raw.data ?? ''
+        };
+      })
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     );
   }
 
@@ -255,23 +281,48 @@ export class DocumentService {
     return this.send({
       operation: DocumentOperation.LIST,
     }).pipe(
+<<<<<<< HEAD
       map((response) => this.mapDocuments(response)),
 
       catchError((error) => {
         console.warn('No documents found.', error);
         return of([]);
       }),
+=======
+      map((response: any) => {
+        const documents = Array.isArray(response)
+          ? response
+          : response?.data ?? response?.items ?? (response ? [response] : []);
+
+        return documents
+          .filter((doc: any) => doc != null)
+          .map((doc: any) => {
+            const pdfUrl = doc.url ?? doc.file_url ?? doc.pdf_url ?? doc.download_url ?? doc.link ?? doc.fileUrl ?? '';
+            return {
+              id: String(doc.document_id ?? doc.id ?? doc.documentId ?? ''),
+              name: doc.file_name ?? doc.name ?? doc.filename ?? 'Untitled Document',
+              type: doc.file_type ?? doc.type ?? 'Document',
+              status: doc.status ?? 'Processed',
+              uploadedAt: doc.uploaded_at ?? doc.uploadedAt ?? doc.created_at ?? '',
+              url: pdfUrl,
+              fileUrl: pdfUrl,
+              content: doc.content ?? doc.text ?? ''
+            };
+          });
+      })
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     );
   }
 
   /**
-   * READ
+   * READ - Fetch document by ID including PDF url / content
    */
   getDocument(documentId: string): Observable<DocumentSummary> {
     return this.send({
       operation: DocumentOperation.READ,
       documentId,
     }).pipe(
+<<<<<<< HEAD
       map((response) => {
         const [document] = this.mapDocuments(response, undefined, documentId);
 
@@ -281,6 +332,26 @@ export class DocumentService {
 
         return document;
       }),
+=======
+      map((response: any) => {
+        console.log('READ DOCUMENT RESPONSE:', response);
+        const item = Array.isArray(response) ? response[0] : response;
+        const raw = item?.data ?? item?.item ?? item ?? {};
+
+        const pdfUrl = raw.url ?? raw.file_url ?? raw.pdf_url ?? raw.download_url ?? raw.link ?? raw.fileUrl ?? '';
+
+        return {
+          id: String(raw.id ?? raw.document_id ?? documentId),
+          name: raw.name ?? raw.file_name ?? raw.filename ?? 'Document',
+          type: raw.type ?? raw.file_type ?? 'PDF',
+          status: raw.status ?? 'Processed',
+          uploadedAt: raw.uploaded_at ?? raw.uploadedAt ?? new Date().toLocaleDateString(),
+          url: pdfUrl,
+          fileUrl: pdfUrl,
+          content: raw.content ?? raw.text ?? raw.extracted_text ?? raw.data ?? ''
+        };
+      })
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     );
   }
 
@@ -315,6 +386,26 @@ export class DocumentService {
     return this.send({
       operation: DocumentOperation.SEARCH,
       query,
+<<<<<<< HEAD
     }).pipe(map((response) => this.mapDocuments(response)));
+=======
+    }).pipe(
+      map((documents: any[]) =>
+        (documents || []).map((document: any) => {
+          const pdfUrl = document.url ?? document.file_url ?? document.pdf_url ?? document.download_url ?? document.link ?? document.fileUrl ?? '';
+          return {
+            id: String(document.id ?? document.document_id ?? ''),
+            name: document.name ?? document.file_name ?? 'Document',
+            type: document.type ?? document.file_type ?? 'Document',
+            status: document.status ?? 'Processed',
+            uploadedAt: document.uploaded_at ?? document.uploadedAt ?? '',
+            url: pdfUrl,
+            fileUrl: pdfUrl,
+            content: document.content ?? document.text ?? ''
+          };
+        })
+      )
+    );
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
   }
 }

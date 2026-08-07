@@ -1,17 +1,42 @@
+<<<<<<< HEAD
 <section class="amazon-chat-page">
   <div class="amazon-chat-header">
     <div class="brand-copy">
       <p class="eyebrow">Amazon Assistant</p>
       <h1>🛒 Amazon Product Chat</h1>
       <p>Ask product, order, and catalog questions in one place.</p>
+=======
+<section class="chat-page">
+
+  <!-- Amazon Chat Mode Header -->
+  <div class="chat-header">
+
+    <div class="header-left">
+      <div class="amazon-logo-badge">
+        <span class="aws-icon">a</span>
+        <span class="smile-arrow"></span>
+      </div>
+      <div class="header-titles">
+        <div class="brand-row">
+          <h1>Amazon Chat</h1>
+          <span class="amazon-badge">AWS Bedrock AI</span>
+        </div>
+        <p>Ask questions about your uploaded documents, Amazon inventory, and business workflows.</p>
+      </div>
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     </div>
 
     <div class="amazon-chat-status">
       <span class="status-dot"></span>
+<<<<<<< HEAD
       Connected
+=======
+      <span>AI Online</span>
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     </div>
   </div>
 
+<<<<<<< HEAD
   <div class="amazon-conversation-card">
     <div class="conversation" *ngIf="conversation.length; else emptyState">
       <div class="message" *ngFor="let message of conversation" [ngClass]="message.role">
@@ -21,6 +46,70 @@
         </div>
 
         <p>{{ message.content }}</p>
+=======
+  <!-- Conversation Container -->
+  <div class="conversation-card">
+
+    <!-- Empty / Welcome State when conversation has no messages yet -->
+    <div class="empty-state" *ngIf="conversation.length === 0">
+      <div class="welcome-avatar">
+        <span class="amazon-smile-icon">📦</span>
+      </div>
+      <h2>Welcome to Amazon AI Chat</h2>
+      <p>How can I assist your business today?</p>
+
+      <div class="welcome-features">
+        <div class="feature-pill">📦 Inventory & Stock Q&A</div>
+        <div class="feature-pill">📊 Sales & Revenue Trends</div>
+        <div class="feature-pill">🚚 FBA Logistics Tracking</div>
+        <div class="feature-pill">📑 Document Rule Extraction</div>
+      </div>
+    </div>
+
+    <!-- Active Conversation -->
+    <div class="conversation" *ngIf="conversation.length > 0">
+
+      <div
+        class="message-row"
+        *ngFor="let message of conversation"
+        [ngClass]="message.role">
+
+        <div class="message">
+
+          <div class="message-header">
+
+            <div class="avatar">
+              {{ message.role === 'user' ? '👤' : '📦' }}
+            </div>
+
+            <span class="author-label">
+              {{ message.role === 'user' ? 'You' : 'Amazon AI Assistant' }}
+            </span>
+
+          </div>
+
+          <div class="message-content">
+            <p>{{ message.content }}</p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Loading Indicator -->
+      <div class="message-row assistant loading-row" *ngIf="loading">
+        <div class="message">
+          <div class="message-header">
+            <div class="avatar loading-avatar">📦</div>
+            <span class="author-label">Amazon AI is thinking...</span>
+          </div>
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
       </div>
     </div>
 
@@ -33,12 +122,44 @@
     </ng-template>
   </div>
 
+<<<<<<< HEAD
   <form class="amazon-chat-input-card" (ngSubmit)="sendMessage()">
     <input
       type="text"
       [(ngModel)]="prompt"
       name="prompt"
       placeholder="Ask about orders, products, pricing..." />
+=======
+  <!-- Chat Input Footer -->
+  <form
+    class="chat-input-card"
+    (ngSubmit)="sendMessage()">
+
+    <div class="input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        [(ngModel)]="prompt"
+        name="prompt"
+        [disabled]="loading"
+        placeholder="Ask anything about your documents or Amazon store..."
+        autocomplete="off" />
+    </div>
+
+    <button
+      type="submit"
+      class="amazon-send-btn"
+      [disabled]="loading || !prompt.trim()">
+      
+      <span *ngIf="!loading">
+        {{ prompt.trim() ? 'Send Message ➔' : 'Send' }}
+      </span>
+
+      <span *ngIf="loading" class="btn-spinner-wrapper">
+        <span class="btn-spinner"></span>
+        <span>Sending...</span>
+      </span>
+>>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
 
     <button type="submit" [disabled]="loading">
       {{ loading ? 'Sending...' : 'Ask Amazon' }}

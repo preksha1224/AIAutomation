@@ -1,5 +1,6 @@
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { finalize } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { DocumentService } from '../services/document.service';
 
@@ -57,31 +58,34 @@ export class DashboardComponent implements OnInit {
   }
 
   uploadDocument(): void {
-    if (!this.selectedFile) {
+    if (!this.selectedFile || this.isUploading) {
       return;
     }
 
     this.isUploading = true;
     this.statusMessage = 'Uploading...';
 
-    this.documentService.uploadDocument(this.selectedFile).subscribe({
-      next: () => {
-        this.selectedFile = null;
-        this.statusMessage = 'Upload successful';
+    this.documentService
+      .uploadDocument(this.selectedFile)
+      .pipe(
+        finalize(() => {
+          this.isUploading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.selectedFile = null;
+          this.statusMessage = 'Upload successful';
 
-        this.isUploading = false;
+          // Reload documents from backend
+          this.loadDocuments();
+        },
 
-        // Reload documents from backend
-        this.loadDocuments();
-      },
-
-      error: (err) => {
-        console.error(err);
-
-        this.statusMessage = 'Upload failed';
-        this.isUploading = false;
-      },
-    });
+        error: (err) => {
+          console.error(err);
+          this.statusMessage = 'Upload failed';
+        },
+      });
   }
 
   loadDocuments(): void {
