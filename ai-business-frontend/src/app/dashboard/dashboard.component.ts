@@ -1,8 +1,9 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { finalize } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { DocumentService } from '../services/document.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 interface UploadedDocument {
   id: string;
@@ -38,6 +39,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private documentService: DocumentService,
+    private readonly sanitizer: DomSanitizer,
+    private readonly cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);

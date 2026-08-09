@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 <div class="documents-container">
     <section class="search-card">
 
-=======
-<div>
-  <section class="search-card">
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     <input
       type="text"
       [(ngModel)]="search"
@@ -34,11 +29,7 @@
 
     <label class="upload-dropzone">
       <input
-<<<<<<< HEAD
         #fileInput
-=======
-        #dropzoneInput
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
         type="file"
         accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
         [disabled]="isUploading"
@@ -55,11 +46,7 @@
       <button type="button" class="button-secondary" [disabled]="isUploading">
         Choose File
         <input
-<<<<<<< HEAD
           #fileInput
-=======
-          #summaryInput
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
           type="file"
           accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
           [disabled]="isUploading"
@@ -117,7 +104,6 @@
         </thead>
 
         <tbody>
-<<<<<<< HEAD
 
           <tr
             *ngFor="let document of searchResults">
@@ -125,17 +111,6 @@
             <td class="document-cell">
               <strong class="document-name">{{ document.name }}</strong>
               <div class="document-type">{{ document.type }}</div>
-=======
-          <tr *ngFor="let document of searchResults">
-            <td>
-              <strong>{{ document.name }}</strong>
-              <div class="doc-meta-info">
-                <span class="doc-type-tag">{{ document.type }}</span>
-                <span class="doc-id-tag" *ngIf="document.id" title="Document ID">
-                  ID: {{ document.id }}
-                </span>
-              </div>
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
             </td>
 
             <td>
@@ -149,7 +124,6 @@
               </span>
             </td>
 
-<<<<<<< HEAD
             <td class="actions-cell">
               <div class="actions-group">
               <button
@@ -157,48 +131,23 @@
                 (click)="viewDocument(document)">
                 <span class="action-emoji" aria-hidden="true">👁</span>
                 View
-=======
-            <td>{{ document.uploadedAt }}</td>
-
-            <td>
-              <button
-                type="button"
-                class="button-secondary action-view-btn"
-                [disabled]="isLoadingView && viewingDocId === document.id"
-                (click)="viewDocument(document)">
-                <span *ngIf="isLoadingView && viewingDocId === document.id" class="spinner-sm-dark"></span>
-                <span>{{ (isLoadingView && viewingDocId === document.id) ? 'Loading...' : '👁 View' }}</span>
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
               </button>
  
               <button
-<<<<<<< HEAD
                 class="button-secondary action-button"
-=======
-                type="button"
-                class="button-secondary"
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
                 (click)="editDocument(document)">
                 <span class="action-emoji" aria-hidden="true">✏️</span>
                 Rename
               </button>
  
               <button
-<<<<<<< HEAD
                 class="button-danger action-button"
-=======
-                type="button"
-                class="button-danger"
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
                 (click)="deleteDocument(document)">
                 <span class="action-emoji" aria-hidden="true">🗑</span>
                 Delete
               </button>
-<<<<<<< HEAD
               </div>
  
-=======
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
             </td>
           </tr>
 

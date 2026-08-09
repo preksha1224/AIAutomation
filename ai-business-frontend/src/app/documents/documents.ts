@@ -1,24 +1,21 @@
-<<<<<<< HEAD
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Inject,
   OnInit,
   PLATFORM_ID,
   QueryList,
+  ViewChild,
   ViewChildren,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-=======
-import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
 import { finalize } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { DocumentService } from '../services/document.service';
 import { DocumentSummary } from '../models/document.summary.model';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-documents',
@@ -27,16 +24,12 @@ import { DocumentSummary } from '../models/document.summary.model';
   styleUrl: './documents.scss',
 })
 export class Documents implements OnInit {
-<<<<<<< HEAD
   private readonly uploadedDocumentsStorageKey = 'ai-business-frontend.recent-documents';
-=======
-  @ViewChild('dropzoneInput') dropzoneInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('summaryInput') summaryInput!: ElementRef<HTMLInputElement>;
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
 
   documents: DocumentSummary[] = [];
   searchResults: DocumentSummary[] = [];
-
+@ViewChild('dropzoneInput') dropzoneInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('summaryInput') summaryInput!: ElementRef<HTMLInputElement>;
   selectedDocument: DocumentSummary | null = null;
   safePdfUrl: SafeResourceUrl | null = null;
   isViewingModalOpen = false;
@@ -81,16 +74,11 @@ export class Documents implements OnInit {
     if (input.files?.length) {
       this.selectedFile = input.files[0];
       this.statusMessage = '';
-<<<<<<< HEAD
       return;
     }
 
     this.clearSelectedFile();
 
-=======
-      this.cdr.detectChanges();
-    }
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
   }
 
   /**
@@ -109,25 +97,17 @@ export class Documents implements OnInit {
    * Upload & Process Document (stores & integrates with returned ID & URL)
    */
   uploadDocument(): void {
-<<<<<<< HEAD
 
     const fileToUpload = this.selectedFile;
 
     if (!fileToUpload) {
 
       this.statusMessage = 'Please select a file.';
-=======
-    if (!this.selectedFile || this.isUploading) {
-      if (!this.selectedFile) {
-        this.statusMessage = 'Please select a file to upload.';
-      }
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
       return;
     }
 
     const currentFile = this.selectedFile;
     this.isUploading = true;
-<<<<<<< HEAD
     this.statusMessage = 'Uploading...';
 
     this.documentService
@@ -309,61 +289,11 @@ export class Documents implements OnInit {
     }
 
     return 'Document upload failed. Please try again.';
-=======
-    this.statusMessage = `Uploading "${currentFile.name}"...`;
-    this.cdr.detectChanges();
-
-    this.documentService
-      .uploadDocument(currentFile)
-      .pipe(
-        finalize(() => {
-          this.isUploading = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe({
-        next: (newDoc: DocumentSummary) => {
-          console.log('UPLOAD SUCCESS & INTEGRATED WITH ID:', newDoc);
-
-          const index = this.documents.findIndex((d) => d.id === newDoc.id);
-          if (index >= 0) {
-            this.documents[index] = newDoc;
-          } else {
-            this.documents = [newDoc, ...this.documents];
-          }
-          this.searchResults = [...this.documents];
-
-          this.statusMessage = `Document uploaded & saved! (ID: ${newDoc.id})`;
-          this.selectedFile = null;
-          this.resetFileInputs();
-          this.cdr.detectChanges();
-
-          // Sync with server list
-          this.loadDocuments();
-
-          // Clear status after 6 seconds
-          setTimeout(() => {
-            if (this.statusMessage.includes('uploaded & saved')) {
-              this.statusMessage = '';
-              this.cdr.detectChanges();
-            }
-          }, 6000);
-        },
-
-        error: (error) => {
-          console.error('UPLOAD ERROR', error);
-          this.statusMessage = 'Upload failed. Please try again.';
-          this.resetFileInputs();
-          this.cdr.detectChanges();
-        },
-      });
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
   }
 
   /**
    * List Documents
    */
-<<<<<<< HEAD
 loadDocuments(): void {
  
   this.isLoading = true;
@@ -403,29 +333,6 @@ loadDocuments(): void {
   });
 
 }
-=======
-  loadDocuments(): void {
-    this.isLoading = true;
-
-    this.documentService.getDocuments().subscribe({
-      next: (documents: DocumentSummary[]) => {
-        console.log('LIST RESPONSE:', documents);
-
-        this.documents = documents;
-        this.searchResults = [...documents];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-
-      error: (error) => {
-        console.error('LIST ERROR:', error);
-        this.isLoading = false;
-        this.statusMessage = 'Unable to load documents.';
-        this.cdr.detectChanges();
-      },
-    });
-  }
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
 
   /**
    * Search
@@ -452,20 +359,7 @@ loadDocuments(): void {
    * Read / View PDF & Document Details
    */
   viewDocument(document: DocumentSummary): void {
-<<<<<<< HEAD
     const existingDocumentUrl = this.getDocumentUrl(document);
-=======
-    this.viewingDocId = document.id;
-    this.isLoadingView = true;
-    this.selectedDocument = document;
-    this.safePdfUrl = null;
-    this.isViewingModalOpen = true;
-
-    const initialUrl = document.url || document.fileUrl;
-    if (initialUrl) {
-      this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(initialUrl);
-    }
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
 
     if (existingDocumentUrl) {
       this.openDocumentUrl(existingDocumentUrl);
@@ -475,7 +369,6 @@ loadDocuments(): void {
     const previewWindow = this.openPendingPreviewWindow();
  
     this.documentService.getDocument(document.id).subscribe({
-<<<<<<< HEAD
  
       next: (response) => {
  
@@ -510,28 +403,6 @@ loadDocuments(): void {
  
       }
 
-=======
-      next: (fullDoc) => {
-        console.log('VIEW DOCUMENT SUCCESS:', fullDoc);
-        this.selectedDocument = { ...document, ...fullDoc };
-
-        const targetUrl = fullDoc.url || fullDoc.fileUrl || document.url || document.fileUrl;
-        if (targetUrl) {
-          this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(targetUrl);
-        }
-
-        this.isLoadingView = false;
-        this.viewingDocId = null;
-        this.cdr.detectChanges();
-      },
-
-      error: (error) => {
-        console.error('Error fetching document view details:', error);
-        this.isLoadingView = false;
-        this.viewingDocId = null;
-        this.cdr.detectChanges();
-      },
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
     });
   }
 
@@ -587,7 +458,6 @@ loadDocuments(): void {
     }
 
     this.documentService.deleteDocument(document.id).subscribe({
-<<<<<<< HEAD
 
       next: (response) => {
  
@@ -596,10 +466,6 @@ loadDocuments(): void {
         this.statusMessage = 'Document deleted successfully.';
         this.removeDocumentFromState(document.id);
  
-=======
-      next: () => {
-        this.statusMessage = 'Document deleted successfully.';
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
         this.loadDocuments();
       },
 
@@ -612,7 +478,6 @@ loadDocuments(): void {
   logout(): void {
     this.auth.logout();
   }
-<<<<<<< HEAD
 
   private getDocumentUrl(document: DocumentSummary): string | null {
     if (typeof document.fileUrl === 'string' && document.fileUrl.trim()) {
@@ -660,6 +525,4 @@ loadDocuments(): void {
     }
   }
 
-=======
->>>>>>> 97641a2858a858b7aefeec9da1bdc7b23b1fb0e8
 }
