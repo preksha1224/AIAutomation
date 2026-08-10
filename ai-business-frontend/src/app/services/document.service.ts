@@ -16,7 +16,10 @@ export class DocumentService {
     'https://intn8n.deenovum.com/webhook/4eb0f07a-0b98-4e75-9df3-4454666fdb3a';
 
   private readonly deleteWebhook =
-    'https://automation-crud-ai-ukhvmwc.svc.aped-4627-b74a.pinecone.io/vectors/delete';
+    'https://intn8n.deenovum.com/webhook/96a25dc9-1356-4d21-acd4-f746d03b6e18';
+
+  private readonly renameWebhook =
+    'https://intn8n.deenovum.com/webhook/bdac33c5-4e3e-4336-82f0-84fd4d3b78d5';
 
   constructor(private readonly http: HttpClient) {}
 
@@ -296,16 +299,35 @@ export class DocumentService {
   }
 
   /**
+   * RENAME - dedicated webhook, no generic send()
+   */
+  renameDocument(documentId: string, newName: string): Observable<any> {
+    const formData = new FormData();
+
+    formData.append('operation', 'update');
+    formData.append('documentId', documentId);
+    formData.append('name', newName);
+
+    console.log('Renaming document:', documentId, '→', newName);
+    console.log('Rename webhook:', this.renameWebhook);
+
+    return this.http.post(this.renameWebhook, formData);
+  }
+
+  /**
    * DELETE
    */
-  deleteDocument(documentId: string): Observable<unknown> {
-    return this.send(
-      {
-        operation: DocumentOperation.DELETE,
-        documentId,
-      },
-      this.deleteWebhook,
-    );
+  deleteDocument(documentId: string): Observable<any> {
+    const formData = new FormData();
+
+    formData.append('documentId', documentId);
+    formData.append('document_id', documentId);
+    formData.append('id', documentId);
+
+    console.log('Deleting document:', documentId);
+    console.log('Delete webhook:', this.deleteWebhook);
+
+    return this.http.post(this.deleteWebhook, formData);
   }
 
   /**

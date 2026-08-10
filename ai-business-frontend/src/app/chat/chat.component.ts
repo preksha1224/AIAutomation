@@ -38,10 +38,11 @@ export class ChatComponent {
     ).subscribe((response: ChatResponse) => {
       const assistantText =
         response?.answer ??
+        response?.output ??
         response?.text ??
         response?.result ??
         response?.message ??
-        (typeof response === 'string' ? response : JSON.stringify(response));
+        (typeof response === 'string' ? response : 'No response received.');
 
       this.conversation.push({ role: 'assistant', content: assistantText });
     });

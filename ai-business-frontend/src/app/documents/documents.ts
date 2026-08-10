@@ -43,6 +43,8 @@ export class Documents implements OnInit {
 
   isUploading = false;
   isLoading = false;
+  isDeletingDocumentId: string | null = null;
+  isRenamingDocumentId: string | null = null;
 
   @ViewChildren('fileInput')
   private fileInputs?: QueryList<ElementRef<HTMLInputElement>>;
@@ -244,7 +246,9 @@ export class Documents implements OnInit {
   }
 
   private removeDocumentFromState(documentId: string): void {
-    const remainingDocuments = this.documents.filter((document) => document.id !== documentId);
+    const remainingDocuments = this.documents.filter(
+      (document) => document.id !== documentId && document.document_id !== documentId
+    );
     this.syncDocuments(remainingDocuments);
   }
 
@@ -289,6 +293,47 @@ export class Documents implements OnInit {
     }
 
     return 'Document upload failed. Please try again.';
+  }
+
+  private getDocumentIdentifier(document: DocumentSummary): string | null {
+    const rawId =
+      (typeof document.id === 'string' && document.id.trim() && document.id)
+      || (typeof document.document_id === 'string' && document.document_id.trim() && document.document_id)
+      || '';
+
+    const documentId = rawId.trim();
+    return documentId ? documentId : null;
+  }
+
+  private getDeleteErrorMessage(error: unknown): string {
+    if (
+      typeof error === 'object'
+      && error !== null
+      && 'error' in error
+      && typeof error.error === 'object'
+      && error.error !== null
+      && 'message' in error.error
+      && typeof error.error.message === 'string'
+      && error.error.message.trim()
+    ) {
+      return `Delete failed: ${error.error.message}`;
+    }
+
+    if (error instanceof Error && error.message.trim()) {
+      return `Delete failed: ${error.message}`;
+    }
+
+    return 'Delete failed. Please check n8n webhook method and URL.';
+  }
+
+  isDeletingDocument(document: DocumentSummary): boolean {
+    const documentId = this.getDocumentIdentifier(document);
+    return documentId !== null && this.isDeletingDocumentId === documentId;
+  }
+
+  isRenamingDocument(document: DocumentSummary): boolean {
+    const documentId = this.getDocumentIdentifier(document);
+    return documentId !== null && this.isRenamingDocumentId === documentId;
   }
 
   /**
@@ -424,53 +469,99 @@ loadDocuments(): void {
   }
 
   /**
-   * Update
+   * Rename
    */
   editDocument(document: DocumentSummary): void {
-    const newName = prompt('Enter new document name', document.name);
+    const documentId = this.getDocumentIdentifier(document);
 
-    if (!newName?.trim()) {
+    if (!documentId) {
+      this.statusMessage = 'Unable to rename document: missing document ID.';
       return;
     }
 
-    this.documentService
-      .updateDocument(document.id, newName.trim())
-      .subscribe({
-        next: () => {
-          this.statusMessage = 'Document updated successfully.';
-          this.loadDocuments();
-        },
+    if (this.isRenamingDocumentId === documentId) {
+      return;
+    }
 
-        error: (error) => {
-          console.error(error);
-        },
-      });
+    const newName = prompt('Enter new document name:', document.name);
+
+    if (!newName?.trim() || newName.trim() === document.name) {
+      return;
+    }
+
+    this.isRenamingDocumentId = documentId;
+    this.statusMessage = `Renaming "${document.name}"...`;
+
+    this.documentService.renameDocument(documentId, newName.trim()).pipe(
+      finalize(() => {
+        this.isRenamingDocumentId = null;
+      })
+    ).subscribe({
+      next: (response) => {
+        console.log('Rename response:', response);
+
+        // Update name in-place — no full reload needed
+        const updatedDocuments = this.documents.map((doc) => {
+          if (this.getDocumentIdentifier(doc) === documentId) {
+            return { ...doc, name: newName.trim(), file_name: newName.trim() };
+          }
+          return doc;
+        });
+
+        this.syncDocuments(updatedDocuments);
+        this.statusMessage = 'Document renamed successfully.';
+      },
+
+      error: (error) => {
+        console.error('Rename error:', error);
+        this.statusMessage = 'Rename failed. Please try again.';
+      },
+    });
   }
 
   /**
    * Delete
    */
   deleteDocument(document: DocumentSummary): void {
+    const documentId = this.getDocumentIdentifier(document);
+
+    if (!documentId) {
+      this.statusMessage = 'Unable to delete document: missing document ID.';
+      return;
+    }
+
+    if (this.isDeletingDocumentId === documentId) {
+      return;
+    }
+
     const confirmed = confirm(`Delete "${document.name}"?`);
 
     if (!confirmed) {
       return;
     }
 
-    this.documentService.deleteDocument(document.id).subscribe({
+    this.isDeletingDocumentId = documentId;
+    this.statusMessage = `Deleting "${document.name}"...`;
+
+    this.documentService.deleteDocument(documentId).pipe(
+      finalize(() => {
+        this.isDeletingDocumentId = null;
+      })
+    ).subscribe({
 
       next: (response) => {
- 
+  
         console.log(response);
- 
+  
         this.statusMessage = 'Document deleted successfully.';
-        this.removeDocumentFromState(document.id);
- 
+        this.removeDocumentFromState(documentId);
+  
         this.loadDocuments();
       },
 
       error: (error) => {
         console.error(error);
+        this.statusMessage = this.getDeleteErrorMessage(error);
       },
     });
   }

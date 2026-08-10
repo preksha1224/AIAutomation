@@ -127,24 +127,30 @@
             <td class="actions-cell">
               <div class="actions-group">
               <button
+                type="button"
                 class="button-secondary action-button"
+                [disabled]="isDeletingDocument(document) || isRenamingDocument(document)"
                 (click)="viewDocument(document)">
                 <span class="action-emoji" aria-hidden="true">👁</span>
                 View
               </button>
  
               <button
+                type="button"
                 class="button-secondary action-button"
+                [disabled]="isDeletingDocument(document) || isRenamingDocument(document)"
                 (click)="editDocument(document)">
                 <span class="action-emoji" aria-hidden="true">✏️</span>
-                Rename
+                {{ isRenamingDocument(document) ? 'Renaming...' : 'Rename' }}
               </button>
  
               <button
+                type="button"
                 class="button-danger action-button"
+                [disabled]="isDeletingDocument(document) || isRenamingDocument(document)"
                 (click)="deleteDocument(document)">
                 <span class="action-emoji" aria-hidden="true">🗑</span>
-                Delete
+                {{ isDeletingDocument(document) ? 'Deleting...' : 'Delete' }}
               </button>
               </div>
  
@@ -211,13 +217,13 @@
         </div>
 
         <!-- Text Content Viewer (if no PDF URL but text content is available) -->
-        <div class="doc-text-container" *ngIf="!isLoadingView && !safePdfUrl && selectedDocument?.content">
+        <div class="doc-text-container" *ngIf="!isLoadingView && !safePdfUrl && selectedDocument?.['content']">
           <h4>Extracted Document Content</h4>
-          <pre class="content-pre">{{ selectedDocument?.content }}</pre>
+          <pre class="content-pre">{{ selectedDocument?.['content'] }}</pre>
         </div>
 
         <!-- Fallback Document Info Card (if no iframe URL) -->
-        <div class="doc-fallback-container" *ngIf="!isLoadingView && !safePdfUrl && !selectedDocument?.content">
+        <div class="doc-fallback-container" *ngIf="!isLoadingView && !safePdfUrl && !selectedDocument?.['content']">
           <div class="fallback-icon">📑</div>
           <h4>{{ selectedDocument?.name }}</h4>
           <p>Document ID: <code>{{ selectedDocument?.id }}</code></p>
