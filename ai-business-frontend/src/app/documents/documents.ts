@@ -37,6 +37,7 @@ export class Documents implements OnInit {
   viewingDocId: string | null = null;
 
   selectedFile: File | null = null;
+  selectedFiles: File[] = [];
 
   search = '';
   statusMessage = '';
@@ -74,12 +75,13 @@ export class Documents implements OnInit {
     const input = event.target as HTMLInputElement;
 
     if (input.files?.length) {
-      this.selectedFile = input.files[0];
+      this.selectedFiles = Array.from(input.files);
+      this.selectedFile = this.selectedFiles[0] ?? null;
       this.statusMessage = '';
       return;
     }
 
-    this.clearSelectedFile();
+    this.clearSelectedFiles();
 
   }
 
@@ -100,53 +102,87 @@ export class Documents implements OnInit {
    */
   uploadDocument(): void {
 
-    const fileToUpload = this.selectedFile;
+    const filesToUpload = this.selectedFiles.length
+      ? [...this.selectedFiles]
+      : (this.selectedFile ? [this.selectedFile] : []);
 
-    if (!fileToUpload) {
+    if (!filesToUpload.length) {
 
-      this.statusMessage = 'Please select a file.';
+      this.statusMessage = 'Please select at least one file.';
       return;
     }
 
-    const currentFile = this.selectedFile;
     this.isUploading = true;
-    this.statusMessage = 'Uploading...';
+    this.statusMessage = `Uploading 0/${filesToUpload.length}...`;
 
-    this.documentService
-      .uploadDocument(fileToUpload)
-      .pipe(
-        finalize(() => {
-          this.isUploading = false;
-        })
-      )
-      .subscribe({
+    const uploadNext = (index: number, successCount: number, failedCount: number): void => {
+      if (index >= filesToUpload.length) {
+        this.isUploading = false;
+        this.clearSelectedFiles();
 
-        next: (document) => {
-
-          console.log('UPLOAD SUCCESS');
-          console.log(document);
-
-          this.prependUploadedDocument(document);
-          this.statusMessage = 'Document uploaded successfully.';
-
-          this.clearSelectedFile();
-
-        },
-
-        error: (error) => {
-
-          console.error('UPLOAD ERROR');
-          console.error(error);
-
-          this.statusMessage = this.getUploadErrorMessage(error);
-          this.clearSelectedFile();
-
+        if (failedCount === 0) {
+          this.statusMessage = successCount + ' document' + (successCount === 1 ? '' : 's') + ' uploaded successfully.';
+          return;
         }
 
-      });
+        if (successCount === 0) {
+          this.statusMessage = 'All uploads failed (' + failedCount + '). Please try again.';
+          return;
+        }
+
+        this.statusMessage = successCount + ' uploaded, ' + failedCount + ' failed.';
+        return;
+      }
+
+      const fileToUpload = filesToUpload[index];
+      this.statusMessage = `Uploading ${index + 1}/${filesToUpload.length}: ${fileToUpload.name}`;
+
+      this.documentService
+        .uploadDocument(fileToUpload)
+        .subscribe({
+
+          next: (document) => {
+
+            console.log('UPLOAD SUCCESS');
+            console.log(document);
+
+            this.prependUploadedDocument(document);
+            uploadNext(index + 1, successCount + 1, failedCount);
+
+          },
+
+          error: (error) => {
+
+            console.error('UPLOAD ERROR');
+            console.error(error);
+            console.error(this.getUploadErrorMessage(error));
+
+            uploadNext(index + 1, successCount, failedCount + 1);
+
+          }
+
+        });
+    };
+
+    uploadNext(0, 0, 0);
 
   }
 
+  getSelectedFileNamesPreview(): string {
+    return this.selectedFiles
+      .slice(0, 2)
+      .map((file) => file.name)
+      .join(', ');
+  }
+
+  getRemainingSelectedFileCount(): number {
+    return Math.max(this.selectedFiles.length - 2, 0);
+  }
+
+  private clearSelectedFiles(): void {
+    this.selectedFiles = [];
+    this.clearSelectedFile();
+  }
   private clearSelectedFile(): void {
     this.selectedFile = null;
     this.fileInputs?.forEach((fileInput) => {
@@ -617,3 +653,8 @@ loadDocuments(): void {
   }
 
 }
+
+
+
+
+

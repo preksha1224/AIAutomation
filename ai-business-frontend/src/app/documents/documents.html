@@ -31,6 +31,7 @@
       <input
         #fileInput
         type="file"
+        multiple
         accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
         [disabled]="isUploading"
         (change)="selectFile($event)" />
@@ -47,7 +48,8 @@
         Choose File
         <input
           #fileInput
-          type="file"
+        type="file"
+        multiple
           accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
           [disabled]="isUploading"
           (change)="selectFile($event)" />
@@ -57,7 +59,7 @@
         type="button"
         class="button-primary upload-btn"
         (click)="uploadDocument()"
-        [disabled]="!selectedFile || isUploading">
+        [disabled]="!selectedFiles.length || isUploading">
         
         <span *ngIf="isUploading" class="spinner-inline"></span>
         <span>{{ isUploading ? 'Uploading...' : 'Upload & Process' }}</span>
@@ -246,3 +248,7 @@
   </div>
 
 </div>
+
+
+
+
