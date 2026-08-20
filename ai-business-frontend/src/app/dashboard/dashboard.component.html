@@ -1,33 +1,28 @@
 <section class="dashboard-shell">
 
-  <!-- ============================================================
-       WELCOME
-  ============================================================= -->
+  <!-- =========================
+       HERO SECTION
+  ========================== -->
 
-  <section class="welcome-section">
+  <section class="hero-card">
 
-    <div class="welcome-content">
+    <div class="hero-content">
 
-      <div class="welcome-icon">
-        🤖
-      </div>
+      <span class="eyebrow">
+        INTELLIGENT DOCUMENT RAG PLATFORM
+      </span>
 
-      <div>
+      <h1>
+        👋 Welcome Back
+      </h1>
 
-        <p class="welcome-label">
-          KNOWLEDGEOS AI
-        </p>
+      <p>
+        Your intelligent document workspace.
+        Upload your documents, build your knowledge base,
+        and get AI-powered answers from your own data.
+      </p>
 
-        <h1>
-          👋 Welcome Back
-        </h1>
-
-        <p class="welcome-description">
-          Manage your documents and build your
-          AI-powered knowledge workspace.
-        </p>
-
-      </div>
+  
 
     </div>
 
@@ -47,105 +42,177 @@
   </section>
 
 
-  <!-- ============================================================
-       STATUS MESSAGE
-  ============================================================= -->
+  <!-- =========================
+       DOCUMENT SUMMARY
+  ========================== -->
 
-  <div
-    class="status-message"
-    *ngIf="statusMessage">
+  <section class="dashboard-grid">
 
-    {{ statusMessage }}
+    <!-- DOCUMENT COUNT -->
 
-  </div>
+    <div class="documents-card">
 
+      <div class="card-icon">
+        📄
+      </div>
 
-  <!-- ============================================================
-       STATISTICS
-  ============================================================= -->
+      <div class="card-content">
 
-  <section class="stats-grid">
-
-
-    <!-- TOTAL DOCUMENTS -->
-
-    <div class="stat-card documents-card">
-
-      <div class="stat-top">
-
-        <div class="stat-icon">
-          📄
-        </div>
-
-        <span class="stat-title">
-          Documents
+        <span class="card-label">
+          DOCUMENT LIBRARY
         </span>
+
+        <h2>
+          {{ totalDocuments }}
+        </h2>
+
+        <p>
+          {{ totalDocuments === 1
+            ? 'Document available'
+            : 'Documents available'
+          }}
+        </p>
 
       </div>
 
-
-      <h2>
-        {{ totalDocuments }}
-      </h2>
-
-
-      <p>
-        Total uploaded documents
-      </p>
-
     </div>
 
+
+    <!-- AI CARD -->
+
+    <div class="ai-card">
+
+      <div class="ai-card-icon">
+        ✨
+      </div>
+
+      <div>
+
+        <span class="card-label">
+          DOCUMENT RAG
+        </span>
+
+        <h2>
+          Ask Questions About Your Documents
+        </h2>
+
+        <p>
+          Get intelligent, context-aware answers
+          from the documents in your knowledge base.
+        </p>
+
+        <button
+          type="button"
+          class="text-action"
+          routerLink="/chat">
+
+          Open AI Assistant
+
+          <span>→</span>
+
+        </button>
+
+      </div>
+
+    </div>
 
   </section>
 
-  <!-- ============================================================
-       RAG INFORMATION
-  ============================================================= -->
 
-  <section class="rag-card">
+  <!-- =========================
+       QUICK ACTIONS
+  ========================== -->
 
-    <div class="rag-icon">
-      ✨
-    </div>
+  <section class="quick-section">
 
+    <div class="section-heading">
 
-    <div class="rag-content">
-
-      <span class="card-label">
-        DOCUMENT RAG
+      <span>
+        QUICK ACCESS
       </span>
 
       <h2>
-        Your Knowledge Base is AI Ready
+        Manage Your AI Workspace
       </h2>
-
-      <p>
-        Your uploaded documents are processed and made
-        available to the AI assistant for intelligent
-        question answering.
-      </p>
 
     </div>
 
 
-    <button
-      type="button"
-      class="rag-button"
-      routerLink="/chat">
+    <div class="quick-grid">
 
-      Open AI Assistant
-      <span>→</span>
 
-    </button>
+      <!-- UPLOAD -->
+
+      <button
+        type="button"
+        class="quick-card"
+        routerLink="/documents">
+
+        <div class="quick-icon upload-icon">
+          📤
+        </div>
+
+        <div class="quick-content">
+
+          <h3>
+            Upload Documents
+          </h3>
+
+          <p>
+            Add PDF and DOCX documents
+            to your AI knowledge base.
+          </p>
+
+        </div>
+
+        <span class="quick-arrow">
+          →
+        </span>
+
+      </button>
+
+
+      <!-- CHAT -->
+
+      <button
+        type="button"
+        class="quick-card"
+        routerLink="/chat">
+
+        <div class="quick-icon chat-icon">
+          🤖
+        </div>
+
+        <div class="quick-content">
+
+          <h3>
+            Chat with Your Documents
+          </h3>
+
+          <p>
+            Ask questions and get intelligent
+            answers from your uploaded documents.
+          </p>
+
+        </div>
+
+        <span class="quick-arrow">
+          →
+        </span>
+
+      </button>
+
+
+    </div>
 
   </section>
 
 
-  <!-- ============================================================
+  <!-- =========================
        FOOTER
-  ============================================================= -->
+  ========================== -->
 
-  <section class="dashboard-footer">
+  <div class="dashboard-footer">
 
     <span>
       {{ totalDocuments }}
@@ -153,15 +220,13 @@
       in your workspace
     </span>
 
-    <span
-      *ngIf="lastUpdated">
+    <span *ngIf="lastUpdated">
 
-      • Last updated
+      Last updated
       {{ lastUpdated | date:'dd MMM yyyy, hh:mm a' }}
 
     </span>
 
-  </section>
-
+  </div>
 
 </section>

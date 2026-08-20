@@ -35,7 +35,7 @@
         #dropzoneInput
         type="file"
         multiple
-        accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
+        accept=".pdf,.doc,.docx"
         [disabled]="isUploading || isHandlingDuplicate"
         (change)="selectFile($event)"
       />
@@ -51,7 +51,7 @@
         <h3>Drop files here</h3>
 
         <p>
-          PDF • DOCX • XLSX • PNG • JPG
+          PDF • DOCX
         </p>
 
       </div>
