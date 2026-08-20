@@ -1,43 +1,167 @@
-<!--
-KnowledgeOS AI Dashboard
-Replace your dashboard.component.html with this foundation.
-NOTE: Existing Angular methods (uploadDocument, runSearch, editDocument,
-deleteDocument, viewDocument, loadDocuments, etc.) are intentionally preserved.
--->
-
 <section class="dashboard-shell">
 
+  <!-- ============================================================
+       WELCOME
+  ============================================================= -->
+
   <section class="welcome-section">
-    <div>
-      <h1>👋 Welcome Back</h1>
-      <p>Manage, upload and search your AI documents from one workspace.</p>
+
+    <div class="welcome-content">
+
+      <div class="welcome-icon">
+        🤖
+      </div>
+
+      <div>
+
+        <p class="welcome-label">
+          KNOWLEDGEOS AI
+        </p>
+
+        <h1>
+          👋 Welcome Back
+        </h1>
+
+        <p class="welcome-description">
+          Manage your documents and build your
+          AI-powered knowledge workspace.
+        </p>
+
+      </div>
+
     </div>
+
+
+    <!-- AI STATUS -->
+
+    <div class="ai-status">
+
+      <span class="status-dot"></span>
+
+      <span>
+        AI Online
+      </span>
+
+    </div>
+
   </section>
+
+
+  <!-- ============================================================
+       STATUS MESSAGE
+  ============================================================= -->
+
+  <div
+    class="status-message"
+    *ngIf="statusMessage">
+
+    {{ statusMessage }}
+
+  </div>
+
+
+  <!-- ============================================================
+       STATISTICS
+  ============================================================= -->
 
   <section class="stats-grid">
 
-    <div class="stat-card">
-      <span>📄 Documents</span>
-      <h2>{{ documents.length }}</h2>
+
+    <!-- TOTAL DOCUMENTS -->
+
+    <div class="stat-card documents-card">
+
+      <div class="stat-top">
+
+        <div class="stat-icon">
+          📄
+        </div>
+
+        <span class="stat-title">
+          Documents
+        </span>
+
+      </div>
+
+
+      <h2>
+        {{ totalDocuments }}
+      </h2>
+
+
+      <p>
+        Total uploaded documents
+      </p>
+
     </div>
 
-    <div class="stat-card">
-      <span>✅ Processed</span>
-      <h2>{{ documents.filter(d => d.status === 'Processed').length }}</h2>
-    </div>
-
-    <div class="stat-card">
-      <span>⏳ Pending</span>
-      <h2>{{ documents.filter(d => d.status !== 'Processed').length }}</h2>
-    </div>
-
-    <div class="stat-card">
-      <span>🤖 AI Ready</span>
-      <h2>{{ documents.length }}</h2>
-    </div>
 
   </section>
 
+  <!-- ============================================================
+       RAG INFORMATION
+  ============================================================= -->
+
+  <section class="rag-card">
+
+    <div class="rag-icon">
+      ✨
+    </div>
+
+
+    <div class="rag-content">
+
+      <span class="card-label">
+        DOCUMENT RAG
+      </span>
+
+      <h2>
+        Your Knowledge Base is AI Ready
+      </h2>
+
+      <p>
+        Your uploaded documents are processed and made
+        available to the AI assistant for intelligent
+        question answering.
+      </p>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="rag-button"
+      routerLink="/chat">
+
+      Open AI Assistant
+      <span>→</span>
+
+    </button>
+
+  </section>
+
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================= -->
+
+  <section class="dashboard-footer">
+
+    <span>
+      {{ totalDocuments }}
+      {{ totalDocuments === 1 ? 'document' : 'documents' }}
+      in your workspace
+    </span>
+
+    <span
+      *ngIf="lastUpdated">
+
+      • Last updated
+      {{ lastUpdated | date:'dd MMM yyyy, hh:mm a' }}
+
+    </span>
+
+  </section>
 
 
 </section>

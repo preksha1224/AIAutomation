@@ -374,19 +374,30 @@ export class DocumentService {
   // LIST
   // ============================================================
 
-  getDocuments(): Observable<DocumentSummary[]> {
-    return this.send({
-      operation: DocumentOperation.LIST,
-    }).pipe(
-      map((response) => this.mapDocuments(response)),
+getDocuments(): Observable<DocumentSummary[]> {
+  console.log('========== GET DOCUMENTS ==========');
+  console.log('Calling LIST webhook...');
+  console.log('URL:', this.webhook);
+  console.log('Operation:', DocumentOperation.LIST);
 
-      catchError((error) => {
-        console.warn('No documents found.', error);
+  return this.send({
+    operation: DocumentOperation.LIST,
+  }).pipe(
+    map((response: any) => {
 
-        return of([]);
-      }),
-    );
-  }
+      console.log('========== LIST RAW RESPONSE ==========');
+      console.log(response);
+
+      const documents = this.mapDocuments(response);
+
+      console.log('========== MAPPED DOCUMENTS ==========');
+      console.log(documents);
+      console.log('Document count:', documents.length);
+
+      return documents;
+    })
+  );
+}
 
   // ============================================================
   // READ
