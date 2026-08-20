@@ -73,7 +73,7 @@ export class ChatService {
 
     return this.http.post<ChatResponse>(this.chatWebhookProd, payload, { headers }).pipe(
       map((response) => this.normalizeChatResponse(response)),
-      timeout(12000),
+      timeout(65000),
       catchError((prodErr) => {
         console.warn('Prod webhook fallback to test endpoint:', prodErr);
         return this.http.post<ChatResponse>(this.chatWebhookTest, payload, { headers }).pipe(
@@ -93,12 +93,12 @@ export class ChatService {
 
     return this.http.post<ChatResponse>(this.amazonChatWebhookProd, payload, { headers }).pipe(
       map((response) => this.normalizeChatResponse(response)),
-      timeout(12000),
+      timeout(65000),
       catchError((prodErr) => {
         console.warn('Amazon Prod webhook fallback to test endpoint:', prodErr);
         return this.http.post<ChatResponse>(this.amazonChatWebhookTest, payload, { headers }).pipe(
           map((response) => this.normalizeChatResponse(response)),
-          timeout(12000),
+          timeout(60000),
         );
       }),
     );

@@ -4,7 +4,7 @@ import { Observable, map, catchError, of } from 'rxjs';
 
 import { WebhookRequest } from '../models/webhook-request.model';
 import { DocumentOperation } from '../models/document-operation.enum';
-import { DocumentSummary } from '../models/document.summary.model';
+import { DocumentSummary, UploadDocumentResponse } from '../models/document.summary.model';
 
 type DocumentApiResponse = Record<string, unknown>;
 
@@ -12,6 +12,10 @@ type DocumentApiResponse = Record<string, unknown>;
   providedIn: 'root',
 })
 export class DocumentService {
+  // ============================================================
+  // WEBHOOKS
+  // ============================================================
+
   private readonly webhook =
     'https://intn8n.deenovum.com/webhook/4eb0f07a-0b98-4e75-9df3-4454666fdb3a';
 
@@ -23,41 +27,62 @@ export class DocumentService {
 
   constructor(private readonly http: HttpClient) {}
 
-  /**
-   * Generic request to n8n
-   */
+  // ============================================================
+  // GENERIC REQUEST
+  // ============================================================
+
   private send<T = unknown>(request: WebhookRequest, url: string = this.webhook): Observable<T> {
     const formData = new FormData();
 
+    // Operation
     if (request.operation) {
       formData.append('operation', request.operation);
     }
 
-    if (request.file) {
-      formData.append('file', request.file);
+    // IMPORTANT:
+    // Always send the real File object as multipart binary.
+    if (request.file instanceof File) {
+      formData.append('file', request.file, request.file.name);
     }
 
+    // Document ID
     if (request.documentId) {
       formData.append('documentId', request.documentId);
+
       formData.append('document_id', request.documentId);
+
       formData.append('id', request.documentId);
     }
 
+    // Name
     if (request.name) {
       formData.append('name', request.name);
     }
 
+    // Query
     if (request.query) {
       formData.append('query', request.query);
     }
 
-    console.group('Document Service');
+    console.group('DOCUMENT SERVICE REQUEST');
     console.log('URL:', url);
-    console.log('Request:', request);
+    console.log('Operation:', request.operation);
+    console.log('File:', request.file);
+    console.log('Document ID:', request.documentId);
+    console.log('Name:', request.name);
+    console.log('Query:', request.query);
     console.groupEnd();
 
+    // IMPORTANT:
+    // Do NOT set Content-Type manually.
+    // Browser automatically creates:
+    // multipart/form-data; boundary=...
     return this.http.post<T>(url, formData);
   }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
 
   private isRecord(value: unknown): value is DocumentApiResponse {
     return typeof value === 'object' && value !== null;
@@ -96,6 +121,7 @@ export class DocumentService {
     if (Array.isArray(value)) {
       for (const item of value) {
         const candidate = this.findFirstUrl(item, depth + 1);
+
         if (candidate) {
           return candidate;
         }
@@ -119,6 +145,7 @@ export class DocumentService {
 
       for (const key of preferredKeys) {
         const candidate = value[key];
+
         if (typeof candidate === 'string' && /^https?:\/\//i.test(candidate.trim())) {
           return candidate;
         }
@@ -126,6 +153,7 @@ export class DocumentService {
 
       for (const nestedValue of Object.values(value)) {
         const candidate = this.findFirstUrl(nestedValue, depth + 1);
+
         if (candidate) {
           return candidate;
         }
@@ -181,6 +209,7 @@ export class DocumentService {
     const type = this.pickString(normalizedDocument, 'file_type', 'type') ?? sourceFile?.type ?? '';
 
     const uploadedAt = this.pickString(normalizedDocument, 'uploaded_at', 'uploadedAt') ?? '';
+
     const resolvedUrl =
       this.pickString(
         normalizedDocument,
@@ -199,7 +228,9 @@ export class DocumentService {
       ...normalizedDocument,
 
       id,
+
       name,
+
       type,
 
       status: this.pickString(normalizedDocument, 'status') ?? 'Pending',
@@ -215,6 +246,7 @@ export class DocumentService {
       uploaded_at: this.pickString(normalizedDocument, 'uploaded_at', 'uploadedAt') ?? uploadedAt,
 
       url: resolvedUrl,
+
       fileUrl: resolvedUrl,
 
       sourceFile,
@@ -231,15 +263,47 @@ export class DocumentService {
       .filter((document): document is DocumentSummary => document !== null);
   }
 
-  /**
-   * CREATE - Uploads file and maps the returned document ID & URL details
-   */
-  uploadDocument(file: File): Observable<DocumentSummary> {
-    return this.send({
+  // ============================================================
+  // CREATE
+  // ============================================================
+
+  uploadDocument(file: File): Observable<UploadDocumentResponse> {
+    if (!(file instanceof File)) {
+      throw new Error('uploadDocument: file is not a valid File object.');
+    }
+
+    if (file.size === 0) {
+      throw new Error('uploadDocument: file is empty.');
+    }
+
+    return this.send<UploadDocumentResponse>({
       operation: DocumentOperation.CREATE,
       file,
     }).pipe(
       map((response) => {
+        // ------------------------------------------------------
+        // DUPLICATE RESPONSE
+        // ------------------------------------------------------
+
+        if (response.duplicate === true) {
+          return {
+            duplicate: true,
+
+            file_name: response.file_name || file.name,
+
+            document_id: response.document_id || '',
+
+            message:
+              response.message || 'File already exists. Would you like to save it as a new file?',
+
+            options: ['save_as_new'],
+          };
+        }
+
+        // ------------------------------------------------------
+        // NORMAL UPLOAD
+        // ------------------------------------------------------
+
         const [document] = this.mapDocuments(response, file);
 
         if (!document?.document_id) {
@@ -251,9 +315,65 @@ export class DocumentService {
     );
   }
 
-  /**
-   * LIST
-   */
+  // ============================================================
+  // SAVE AS NEW
+  // ============================================================
+
+  saveAsNewDocument(file: File, fileName?: string): Observable<unknown> {
+    if (!(file instanceof File)) {
+      throw new Error('saveAsNewDocument: Invalid File object.');
+    }
+
+    if (file.size <= 0) {
+      throw new Error('saveAsNewDocument: File is empty.');
+    }
+
+    const formData = new FormData();
+
+    // MUST be "file"
+    formData.append('file', file, file.name);
+
+    // MUST be save_as_new
+    formData.append('operation', 'save_as_new');
+
+    formData.append('file_name', fileName?.trim() || file.name);
+
+    console.log('========== SAVE AS NEW REQUEST ==========');
+
+    console.log('URL:', this.webhook);
+
+    console.log('operation:', 'save_as_new');
+
+    console.log('file:', file);
+
+    console.log('file.name:', file.name);
+
+    console.log('file.type:', file.type);
+
+    console.log('file.size:', file.size);
+
+    console.log('FormData:');
+
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(key, {
+          name: value.name,
+          type: value.type,
+          size: value.size,
+        });
+      } else {
+        console.log(key, value);
+      }
+    }
+
+    console.log('==========================================');
+
+    return this.http.post<unknown>(this.webhook, formData);
+  }
+  // ============================================================
+  // LIST
+  // ============================================================
+
   getDocuments(): Observable<DocumentSummary[]> {
     return this.send({
       operation: DocumentOperation.LIST,
@@ -262,14 +382,16 @@ export class DocumentService {
 
       catchError((error) => {
         console.warn('No documents found.', error);
+
         return of([]);
       }),
     );
   }
 
-  /**
-   * READ - Fetch document by ID including PDF url / content
-   */
+  // ============================================================
+  // READ
+  // ============================================================
+
   getDocument(documentId: string): Observable<DocumentSummary> {
     return this.send({
       operation: DocumentOperation.READ,
@@ -287,9 +409,10 @@ export class DocumentService {
     );
   }
 
-  /**
-   * UPDATE
-   */
+  // ============================================================
+  // UPDATE
+  // ============================================================
+
   updateDocument(documentId: string, name: string): Observable<unknown> {
     return this.send({
       operation: DocumentOperation.UPDATE,
@@ -298,41 +421,63 @@ export class DocumentService {
     });
   }
 
-  /**
-   * RENAME - dedicated webhook, no generic send()
-   */
-  renameDocument(documentId: string, newName: string): Observable<any> {
+  // ============================================================
+  // RENAME
+  // ============================================================
+
+  renameDocument(documentId: string, newName: string, file?: File | null): Observable<unknown> {
     const formData = new FormData();
 
     formData.append('operation', 'update');
+
     formData.append('documentId', documentId);
+
+    formData.append('document_id', documentId);
+
+    formData.append('id', documentId);
+
     formData.append('name', newName);
 
-    console.log('Renaming document:', documentId, '→', newName);
-    console.log('Rename webhook:', this.renameWebhook);
+    formData.append('file_name', newName);
 
-    return this.http.post(this.renameWebhook, formData);
+    // Send actual file if provided
+    if (file instanceof File && file.size > 0) {
+      formData.append('file', file, file.name);
+    }
+
+    console.log('RENAME DOCUMENT', {
+      documentId,
+      newName,
+      file,
+    });
+
+    return this.http.post<unknown>(this.renameWebhook, formData);
   }
 
-  /**
-   * DELETE
-   */
-  deleteDocument(documentId: string): Observable<any> {
+  // ============================================================
+  // DELETE
+  // ============================================================
+
+  deleteDocument(documentId: string): Observable<unknown> {
     const formData = new FormData();
 
     formData.append('documentId', documentId);
+
     formData.append('document_id', documentId);
+
     formData.append('id', documentId);
 
     console.log('Deleting document:', documentId);
+
     console.log('Delete webhook:', this.deleteWebhook);
 
-    return this.http.post(this.deleteWebhook, formData);
+    return this.http.post<unknown>(this.deleteWebhook, formData);
   }
 
-  /**
-   * SEARCH
-   */
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
   searchDocuments(query: string): Observable<DocumentSummary[]> {
     return this.send({
       operation: DocumentOperation.SEARCH,

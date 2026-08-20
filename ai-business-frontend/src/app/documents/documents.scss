@@ -668,3 +668,367 @@ tbody td:last-child {
   }
 
 }
+
+/* =========================================================
+   DUPLICATE FILE MODAL
+========================================================= */
+
+.duplicate-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.60);
+  backdrop-filter: blur(4px);
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.duplicate-modal-card {
+  width: min(520px, 100%);
+
+  background: #ffffff;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 25px 60px rgba(15, 23, 42, 0.25),
+    0 10px 25px rgba(15, 23, 42, 0.12);
+
+  animation: duplicateModalIn 0.2s ease-out;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.duplicate-modal-header {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 14px;
+
+  padding: 24px;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.duplicate-warning-icon {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #fff7ed;
+
+  font-size: 22px;
+}
+
+.duplicate-modal-header h3 {
+  margin: 0 0 6px;
+
+  color: #0f172a;
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.duplicate-modal-header p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.duplicate-modal-body {
+  padding: 22px 24px;
+}
+
+
+/* =========================================================
+   FILE PREVIEW
+========================================================= */
+
+.duplicate-file-preview {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 14px;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 12px;
+
+  background: #f8fafc;
+}
+
+.duplicate-file-icon {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #eef2ff;
+
+  font-size: 20px;
+}
+
+.duplicate-file-details {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.duplicate-file-details strong {
+  display: block;
+
+  overflow: hidden;
+
+  color: #1e293b;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duplicate-file-details span {
+  color: #64748b;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.duplicate-message {
+  margin: 18px 0 8px;
+
+  color: #475569;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+.duplicate-question {
+  margin: 0;
+
+  color: #334155;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.duplicate-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 18px 24px 22px;
+
+  background: #f8fafc;
+
+  border-top: 1px solid #e2e8f0;
+}
+
+
+/* =========================================================
+   BUTTONS INSIDE DUPLICATE MODAL
+========================================================= */
+
+.duplicate-modal-actions button {
+  min-width: 110px;
+  min-height: 42px;
+
+  padding: 9px 16px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border-radius: 9px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.duplicate-modal-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.duplicate-modal-actions button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.65;
+}
+
+
+/* =========================================================
+   CANCEL + SAVE AS NEW
+========================================================= */
+
+.duplicate-modal-actions .button-secondary {
+  background: #ffffff;
+
+  border: 1px solid #cbd5e1;
+
+  color: #334155;
+}
+
+.duplicate-modal-actions .button-secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+
+  border-color: #94a3b8;
+}
+
+
+/* =========================================================
+   REPLACE BUTTON
+========================================================= */
+
+.duplicate-modal-actions .button-primary {
+  border: 1px solid transparent;
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.duplicate-modal-actions .spinner-inline {
+  width: 15px;
+  height: 15px;
+
+  flex-shrink: 0;
+
+  border: 2px solid rgba(255, 255, 255, 0.4);
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: duplicateSpinner 0.7s linear infinite;
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes duplicateModalIn {
+  from {
+    opacity: 0;
+
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes duplicateSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .duplicate-backdrop {
+    padding: 14px;
+  }
+
+  .duplicate-modal-card {
+    width: 100%;
+
+    border-radius: 14px;
+  }
+
+  .duplicate-modal-header {
+    padding: 20px;
+  }
+
+  .duplicate-modal-body {
+    padding: 18px 20px;
+  }
+
+  .duplicate-modal-actions {
+    padding: 16px 20px 20px;
+
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+  .duplicate-modal-actions button {
+    width: 100%;
+  }
+}

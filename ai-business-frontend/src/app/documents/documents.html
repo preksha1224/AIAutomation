@@ -1,254 +1,671 @@
 <div class="documents-container">
-    <section class="search-card">
 
-    <input
-      type="text"
-      [(ngModel)]="search"
-      (keyup.enter)="runSearch()"
-      placeholder="Search documents by name or ID..." />
-
-    <button
-      type="button"
-      class="button-primary"
-      (click)="runSearch()">
-      Search
-    </button>
-  </section>
-
+  <!-- =========================================================
+       UPLOAD PANEL
+  ========================================================== -->
   <section class="upload-panel">
+
     <div class="upload-panel-header">
+
       <div>
         <h2>Upload Document</h2>
-        <p>Drag & Drop or choose a file to process with AI.</p>
+
+        <p>
+          Drag &amp; Drop or choose a file to process with AI.
+        </p>
       </div>
 
-      <span class="status-tag" [class.uploading]="isUploading">
+      <span
+        class="status-tag"
+        [class.uploading]="isUploading">
+
         {{ statusMessage || 'Ready to upload' }}
+
       </span>
+
     </div>
 
+
+    <!-- =======================================================
+         DROPZONE
+    ======================================================== -->
     <label class="upload-dropzone">
+
       <input
-        #fileInput
+        #dropzoneInput
         type="file"
         multiple
         accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
-        [disabled]="isUploading"
-        (change)="selectFile($event)" />
+        [disabled]="isUploading || isHandlingDuplicate"
+        (change)="selectFile($event)"
+      />
 
       <div class="upload-dropzone-inner">
-        <div class="upload-icon">⬆</div>
+
+        <div
+          class="upload-icon"
+          aria-hidden="true">
+          ⬆
+        </div>
+
         <h3>Drop files here</h3>
-        <p>PDF • DOCX • XLSX • PNG • JPG</p>
+
+        <p>
+          PDF • DOCX • XLSX • PNG • JPG
+        </p>
+
       </div>
+
     </label>
 
+
+    <!-- =======================================================
+         UPLOAD SUMMARY
+    ======================================================== -->
     <div class="upload-summary">
-      <button type="button" class="button-secondary" [disabled]="isUploading">
+
+      <!-- Choose File -->
+      <button
+        type="button"
+        class="button-secondary"
+        [disabled]="isUploading || isHandlingDuplicate">
+
         Choose File
+
         <input
-          #fileInput
-        type="file"
-        multiple
+          #summaryInput
+          type="file"
+          multiple
           accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg"
-          [disabled]="isUploading"
-          (change)="selectFile($event)" />
+          [disabled]="isUploading || isHandlingDuplicate"
+          (change)="selectFile($event)"
+        />
+
       </button>
 
+
+      <!-- Upload -->
       <button
         type="button"
         class="button-primary upload-btn"
         (click)="uploadDocument()"
-        [disabled]="!selectedFiles.length || isUploading">
-        
-        <span *ngIf="isUploading" class="spinner-inline"></span>
-        <span>{{ isUploading ? 'Uploading...' : 'Upload & Process' }}</span>
+        [disabled]="
+          !selectedFiles.length ||
+          isUploading ||
+          isHandlingDuplicate
+        ">
+
+        <span
+          *ngIf="isUploading"
+          class="spinner-inline">
+        </span>
+
+        <span>
+          {{
+            isUploading
+              ? 'Uploading...'
+              : 'Upload & Process'
+          }}
+        </span>
+
       </button>
 
+
+      <!-- Selected File -->
       <span class="selected-file-label">
-        <ng-container *ngIf="selectedFile; else noFile">
-          📄 {{ selectedFile.name }}
+
+        <ng-container
+          *ngIf="selectedFiles.length > 0; else noFile">
+
+          📄
+
+          <span *ngIf="selectedFile">
+            {{ selectedFile.name }}
+          </span>
+
+          <span
+            *ngIf="selectedFiles.length > 1"
+            class="selected-file-count">
+
+            +{{ selectedFiles.length - 1 }} more
+
+          </span>
+
         </ng-container>
+
 
         <ng-template #noFile>
           No file selected
         </ng-template>
+
       </span>
+
     </div>
+
   </section>
 
-  <section class="files-panel">
-    <div class="files-header">
-      <div>
-        <h2>Recent Documents</h2>
-        <p>
-          {{ searchResults.length ? searchResults.length : documents.length }} Files
-        </p>
+
+  <!-- =========================================================
+       DUPLICATE FILE MODAL
+  ========================================================== -->
+  <div
+    class="modal-backdrop duplicate-backdrop"
+    *ngIf="showDuplicateDialog"
+    (click)="
+      !isHandlingDuplicate &&
+      closeDuplicateDialog()
+    ">
+
+    <div
+      class="duplicate-modal-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="duplicate-title"
+      (click)="$event.stopPropagation()">
+
+
+      <!-- =====================================================
+           DUPLICATE HEADER
+      ====================================================== -->
+      <div class="duplicate-modal-header">
+
+        <div class="duplicate-warning-icon">
+          ⚠️
+        </div>
+
+        <div>
+
+          <h3 id="duplicate-title">
+            File Already Exists
+          </h3>
+
+          <p>
+            A file with the same name already exists.
+          </p>
+
+        </div>
+
       </div>
+
+      <!-- =====================================================
+           DUPLICATE BODY
+      ====================================================== -->
+      <div class="duplicate-modal-body">
+
+        <div class="duplicate-file-preview">
+
+          <span
+            class="duplicate-file-icon"
+            aria-hidden="true">
+            📄
+          </span>
+
+          <div class="duplicate-file-details">
+
+            <strong>
+              {{ duplicateFileName }}
+            </strong>
+
+            <span>
+              This file already exists in your workspace.
+            </span>
+
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- =====================================================
+           DUPLICATE ACTIONS
+      ====================================================== -->
+      <div class="duplicate-modal-actions">
+
+        <!-- Cancel -->
+        <button
+          type="button"
+          class="button-secondary"
+          [disabled]="isHandlingDuplicate"
+          (click)="closeDuplicateDialog()">
+
+          OK
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       RECENT DOCUMENTS
+  ========================================================== -->
+  <section class="files-panel">
+
+    <div class="files-header">
+
+      <div>
+
+        <h2>Recent Documents</h2>
+
+        <p>
+          {{
+            searchResults.length
+              ? searchResults.length
+              : documents.length
+          }}
+          Files
+        </p>
+
+      </div>
+
 
       <button
         type="button"
         class="button-secondary"
-        [disabled]="isLoading"
+        [disabled]="isLoading || isHandlingDuplicate"
         (click)="loadDocuments()">
-        {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+
+        <span
+          *ngIf="isLoading"
+          class="spinner-inline">
+        </span>
+
+        {{
+          isLoading
+            ? 'Refreshing...'
+            : 'Refresh'
+        }}
+
       </button>
+
     </div>
 
+
+    <!-- =======================================================
+         DOCUMENT TABLE
+    ======================================================== -->
     <div class="table-scroll">
+
       <table>
+
         <thead>
+
           <tr>
             <th>Document</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
+
         </thead>
+
 
         <tbody>
 
           <tr
             *ngFor="let document of searchResults">
 
+            <!-- Document -->
             <td class="document-cell">
-              <strong class="document-name">{{ document.name }}</strong>
-              <div class="document-type">{{ document.type }}</div>
+
+              <strong class="document-name">
+                {{ document.name }}
+              </strong>
+
+              <div class="document-type">
+                {{ document.type }}
+              </div>
+
             </td>
 
+
+            <!-- Status -->
             <td>
+
               <span
                 class="status-badge"
                 [ngClass]="{
                   processed: document.status === 'Processed',
                   pending: document.status !== 'Processed'
                 }">
+
                 {{ document.status }}
+
               </span>
+
             </td>
 
+
+            <!-- Actions -->
             <td class="actions-cell">
+
               <div class="actions-group">
-              <button
-                type="button"
-                class="button-secondary action-button"
-                [disabled]="isDeletingDocument(document) || isRenamingDocument(document)"
-                (click)="viewDocument(document)">
-                <span class="action-emoji" aria-hidden="true">👁</span>
-                View
-              </button>
- 
-              <button
-                type="button"
-                class="button-secondary action-button"
-                [disabled]="isDeletingDocument(document) || isRenamingDocument(document)"
-                (click)="editDocument(document)">
-                <span class="action-emoji" aria-hidden="true">✏️</span>
-                {{ isRenamingDocument(document) ? 'Renaming...' : 'Rename' }}
-              </button>
- 
-              <button
-                type="button"
-                class="button-danger action-button"
-                [disabled]="isDeletingDocument(document) || isRenamingDocument(document)"
-                (click)="deleteDocument(document)">
-                <span class="action-emoji" aria-hidden="true">🗑</span>
-                {{ isDeletingDocument(document) ? 'Deleting...' : 'Delete' }}
-              </button>
+
+                <!-- View -->
+                <button
+                  type="button"
+                  class="button-secondary action-button"
+                  [disabled]="
+                    isDeletingDocument(document) ||
+                    isRenamingDocument(document)
+                  "
+                  (click)="viewDocument(document)">
+
+                  <span
+                    class="action-emoji"
+                    aria-hidden="true">
+                    👁
+                  </span>
+
+                  View
+
+                </button>
+
+
+                <!-- Edit -->
+                <button
+                  type="button"
+                  class="button-secondary action-button"
+                  [disabled]="
+                    isDeletingDocument(document) ||
+                    isRenamingDocument(document)
+                  "
+                  (click)="editDocument(document)">
+
+                  <span
+                    class="action-emoji"
+                    aria-hidden="true">
+                    ✏️
+                  </span>
+
+                  {{
+                    isRenamingDocument(document)
+                      ? 'Editing...'
+                      : 'Edit'
+                  }}
+
+                </button>
+
+
+                <!-- Delete -->
+                <button
+                  type="button"
+                  class="button-danger action-button"
+                  [disabled]="
+                    isDeletingDocument(document) ||
+                    isRenamingDocument(document)
+                  "
+                  (click)="deleteDocument(document)">
+
+                  <span
+                    class="action-emoji"
+                    aria-hidden="true">
+                    🗑
+                  </span>
+
+                  {{
+                    isDeletingDocument(document)
+                      ? 'Deleting...'
+                      : 'Delete'
+                  }}
+
+                </button>
+
               </div>
- 
+
             </td>
+
           </tr>
 
-          <tr *ngIf="searchResults.length === 0 && !isLoading">
-            <td colspan="4" style="text-align: center; color: #64748b; padding: 24px;">
+
+          <!-- No documents -->
+          <tr
+            *ngIf="
+              searchResults.length === 0 &&
+              !isLoading
+            ">
+
+            <td
+              colspan="3"
+              style="
+                text-align: center;
+                color: #64748b;
+                padding: 24px;
+              ">
+
               No documents found.
+
             </td>
+
           </tr>
+
         </tbody>
+
       </table>
+
     </div>
+
   </section>
 
-  <!-- PDF & Document Viewer Modal -->
-  <div class="modal-backdrop" *ngIf="isViewingModalOpen" (click)="closeViewModal()">
-    <div class="pdf-modal-card" (click)="$event.stopPropagation()">
-      
-      <!-- Modal Header -->
+
+  <!-- =========================================================
+       PDF / DOCUMENT VIEWER MODAL
+  ========================================================== -->
+  <div
+    class="modal-backdrop"
+    *ngIf="isViewingModalOpen"
+    (click)="closeViewModal()">
+
+    <div
+      class="pdf-modal-card"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()">
+
+
+      <!-- =====================================================
+           MODAL HEADER
+      ====================================================== -->
       <div class="modal-header">
+
         <div class="modal-title-group">
-          <span class="modal-icon">📄</span>
+
+          <span
+            class="modal-icon"
+            aria-hidden="true">
+            📄
+          </span>
+
+
           <div>
-            <h3>{{ selectedDocument?.name }}</h3>
+
+            <h3>
+              {{ selectedDocument?.name }}
+            </h3>
+
+
             <div class="modal-meta">
-              <span class="badge-type">{{ selectedDocument?.type }}</span>
-              <span class="badge-id" *ngIf="selectedDocument?.id">ID: {{ selectedDocument?.id }}</span>
-              <span class="badge-status">{{ selectedDocument?.status }}</span>
+
+              <span
+                class="badge-type"
+                *ngIf="selectedDocument?.type">
+
+                {{ selectedDocument?.type }}
+
+              </span>
+
+
+              <span
+                class="badge-id"
+                *ngIf="selectedDocument?.id">
+
+                ID:
+                {{ selectedDocument?.id }}
+
+              </span>
+
+
+              <span
+                class="badge-status"
+                *ngIf="selectedDocument?.status">
+
+                {{ selectedDocument?.status }}
+
+              </span>
+
             </div>
+
           </div>
+
         </div>
 
+
+        <!-- Modal actions -->
         <div class="modal-header-actions">
-          <button 
-            type="button" 
+
+          <button
+            type="button"
             class="button-secondary external-btn"
-            *ngIf="selectedDocument?.url || selectedDocument?.fileUrl"
+            *ngIf="
+              selectedDocument?.url ||
+              selectedDocument?.fileUrl
+            "
             (click)="openPdfExternal()">
+
             Open PDF ↗
+
           </button>
 
-          <button type="button" class="close-btn" (click)="closeViewModal()">✕</button>
+
+          <button
+            type="button"
+            class="close-btn"
+            aria-label="Close document viewer"
+            (click)="closeViewModal()">
+
+            ✕
+
+          </button>
+
         </div>
+
       </div>
 
-      <!-- Modal Body -->
+
+      <!-- =====================================================
+           MODAL BODY
+      ====================================================== -->
       <div class="modal-body">
-        
-        <!-- Loading State inside Modal -->
-        <div class="modal-loading" *ngIf="isLoadingView">
+
+
+        <!-- Loading -->
+        <div
+          class="modal-loading"
+          *ngIf="isLoadingView">
+
           <div class="spinner-large"></div>
-          <p>Fetching document content...</p>
+
+          <p>
+            Fetching document content...
+          </p>
+
         </div>
 
-        <!-- PDF Embedded Viewer (if URL exists) -->
-        <div class="pdf-viewer-container" *ngIf="!isLoadingView && safePdfUrl">
-          <iframe 
-            [src]="safePdfUrl" 
-            class="pdf-iframe" 
+
+        <!-- PDF Viewer -->
+        <div
+          class="pdf-viewer-container"
+          *ngIf="
+            !isLoadingView &&
+            safePdfUrl
+          ">
+
+          <iframe
+            [src]="safePdfUrl"
+            class="pdf-iframe"
             title="PDF Document Viewer">
           </iframe>
+
         </div>
 
-        <!-- Text Content Viewer (if no PDF URL but text content is available) -->
-        <div class="doc-text-container" *ngIf="!isLoadingView && !safePdfUrl && selectedDocument?.['content']">
-          <h4>Extracted Document Content</h4>
-          <pre class="content-pre">{{ selectedDocument?.['content'] }}</pre>
+
+        <!-- Extracted Text -->
+        <div
+          class="doc-text-container"
+          *ngIf="
+            !isLoadingView &&
+            !safePdfUrl &&
+            selectedDocument?.['content']
+          ">
+
+          <h4>
+            Extracted Document Content
+          </h4>
+
+          <pre class="content-pre">
+{{ selectedDocument?.['content'] }}
+          </pre>
+
         </div>
 
-        <!-- Fallback Document Info Card (if no iframe URL) -->
-        <div class="doc-fallback-container" *ngIf="!isLoadingView && !safePdfUrl && !selectedDocument?.['content']">
-          <div class="fallback-icon">📑</div>
-          <h4>{{ selectedDocument?.name }}</h4>
-          <p>Document ID: <code>{{ selectedDocument?.id }}</code></p>
-          <p class="fallback-hint">Document is ready and stored in your AI workspace database.</p>
-          
-          <div class="fallback-actions">
-            <button 
-              type="button" 
-              class="button-primary"
-              *ngIf="selectedDocument?.url || selectedDocument?.fileUrl"
-              (click)="openPdfExternal()">
-              Download / Open PDF ↗
-            </button>
+
+        <!-- Fallback -->
+        <div
+          class="doc-fallback-container"
+          *ngIf="
+            !isLoadingView &&
+            !safePdfUrl &&
+            !selectedDocument?.['content']
+          ">
+
+          <div class="fallback-icon">
+            📑
           </div>
+
+
+          <h4>
+            {{ selectedDocument?.name }}
+          </h4>
+
+
+          <p>
+            Document ID:
+            <code>
+              {{ selectedDocument?.id }}
+            </code>
+          </p>
+
+
+          <p class="fallback-hint">
+            Document is ready and stored in your AI workspace database.
+          </p>
+
+
+          <div class="fallback-actions">
+
+            <button
+              type="button"
+              class="button-primary"
+              *ngIf="
+                selectedDocument?.url ||
+                selectedDocument?.fileUrl
+              "
+              (click)="openPdfExternal()">
+
+              Download / Open PDF ↗
+
+            </button>
+
+          </div>
+
         </div>
 
       </div>
 
     </div>
+
   </div>
 
 </div>
-
-
-
-

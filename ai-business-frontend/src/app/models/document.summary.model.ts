@@ -14,3 +14,19 @@ export interface DocumentSummary {
   content?: string;
   [key: string]: unknown;
 }
+
+export interface DuplicateFileResponse {
+  duplicate: true;
+  file_name: string;
+  document_id: string;
+  message: string;
+  options: ('replace' | 'save_as_new')[];
+}
+export interface UploadDocumentResponse {
+  duplicate?: boolean;
+  file_name?: string;
+  document_id?: string;
+  message?: string;
+  options?: ('replace' | 'save_as_new')[];
+  [key: string]: unknown;
+}

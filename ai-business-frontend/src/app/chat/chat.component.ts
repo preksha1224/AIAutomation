@@ -27,7 +27,7 @@ export class ChatComponent {
     this.loading = true;
 
     this.chatService.sendMessage(messageText).pipe(
-      timeout(15000),
+      timeout(60000),
       catchError((error) => {
         console.error('Chat send error:', error);
         return of({ answer: 'Unable to reach the AI chat service. Please try again.' } as ChatResponse);

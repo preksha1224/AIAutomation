@@ -9,12 +9,15 @@ import {
   ViewChild,
   ViewChildren,
 } from '@angular/core';
+
 import { isPlatformBrowser } from '@angular/common';
 import { finalize } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
 import { DocumentService } from '../services/document.service';
-import { DocumentSummary } from '../models/document.summary.model';
+
+import { DocumentSummary, UploadDocumentResponse } from '../models/document.summary.model';
+
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
@@ -24,43 +27,137 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   styleUrl: './documents.scss',
 })
 export class Documents implements OnInit {
+  // ============================================================
+  // STORAGE
+  // ============================================================
+
   private readonly uploadedDocumentsStorageKey = 'ai-business-frontend.recent-documents';
 
+  // ============================================================
+  // DOCUMENT DATA
+  // ============================================================
+
   documents: DocumentSummary[] = [];
+
   searchResults: DocumentSummary[] = [];
-@ViewChild('dropzoneInput') dropzoneInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('summaryInput') summaryInput!: ElementRef<HTMLInputElement>;
+
   selectedDocument: DocumentSummary | null = null;
-  safePdfUrl: SafeResourceUrl | null = null;
-  isViewingModalOpen = false;
-  isLoadingView = false;
-  viewingDocId: string | null = null;
 
-  selectedFile: File | null = null;
-  selectedFiles: File[] = [];
+  // ============================================================
+  // FILE INPUTS
+  // ============================================================
 
-  search = '';
-  statusMessage = '';
+  @ViewChild('dropzoneInput')
+  dropzoneInput!: ElementRef<HTMLInputElement>;
 
-  isUploading = false;
-  isLoading = false;
-  isDeletingDocumentId: string | null = null;
-  isRenamingDocumentId: string | null = null;
+  @ViewChild('summaryInput')
+  summaryInput!: ElementRef<HTMLInputElement>;
 
   @ViewChildren('fileInput')
   private fileInputs?: QueryList<ElementRef<HTMLInputElement>>;
 
+  // ============================================================
+  // VIEW / PDF
+  // ============================================================
+
+  safePdfUrl: SafeResourceUrl | null = null;
+
+  isViewingModalOpen = false;
+
+  isLoadingView = false;
+
+  viewingDocId: string | null = null;
+
+  // ============================================================
+  // SELECTED FILES
+  // ============================================================
+
+  /**
+   * Current file selected from the browser.
+   */
+  selectedFile: File | null = null;
+
+  /**
+   * Multiple files selected for normal upload.
+   */
+  selectedFiles: File[] = [];
+
+  // ============================================================
+  // SEARCH / STATUS
+  // ============================================================
+
+  search = '';
+
+  statusMessage = '';
+
+  // ============================================================
+  // LOADING STATES
+  // ============================================================
+
+  isUploading = false;
+
+  isLoading = false;
+
+  isDeletingDocumentId: string | null = null;
+
+  isRenamingDocumentId: string | null = null;
+
+  // ============================================================
+  // DUPLICATE FILE HANDLING
+  // ============================================================
+
+  /**
+   * IMPORTANT:
+   *
+   * This contains the ORIGINAL browser File object.
+   *
+   * We must keep this object because when the user clicks
+   * "Save as New", we need to send the actual file again
+   * to n8n as multipart/form-data.
+   */
+  duplicateFile: File | null = null;
+
+  /**
+   * Additional backup reference to the original File.
+   *
+   * This protects the file from being lost if selectedFile
+   * or selectedFiles gets cleared by another UI action.
+   */
+  pendingDuplicateFile: File | null = null;
+
+  duplicateFileName = '';
+
+  duplicateDocumentId = '';
+
+  duplicateMessage = '';
+
+  showDuplicateDialog = false;
+
+  isHandlingDuplicate = false;
+
+  // ============================================================
+  // PLATFORM
+  // ============================================================
+
   private readonly isBrowser: boolean;
+
+  // ============================================================
+  // CONSTRUCTOR
+  // ============================================================
 
   constructor(
     public auth: AuthService,
     private readonly documentService: DocumentService,
     private readonly sanitizer: DomSanitizer,
     private readonly cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) platformId: Object
+    @Inject(PLATFORM_ID) platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
+
+  // ============================================================
+  // INIT
+  // ============================================================
 
   ngOnInit(): void {
     if (this.isBrowser) {
@@ -68,105 +165,459 @@ export class Documents implements OnInit {
     }
   }
 
-  /**
-   * Select File
-   */
+  // ============================================================
+  // FILE SELECTION
+  // ============================================================
+
   selectFile(event: Event): void {
     const input = event.target as HTMLInputElement;
 
-    if (input.files?.length) {
-      this.selectedFiles = Array.from(input.files);
-      this.selectedFile = this.selectedFiles[0] ?? null;
-      this.statusMessage = '';
+    if (!input.files || input.files.length === 0) {
+      this.clearSelectedFiles();
+
       return;
     }
 
-    this.clearSelectedFiles();
+    // ----------------------------------------------------------
+    // Store the actual browser File objects.
+    // ----------------------------------------------------------
 
+    this.selectedFiles = Array.from(input.files);
+
+    this.selectedFile = this.selectedFiles[0] ?? null;
+
+    // ----------------------------------------------------------
+    // A new selection means the previous duplicate operation
+    // is no longer relevant.
+    // ----------------------------------------------------------
+
+    this.duplicateFile = null;
+
+    this.pendingDuplicateFile = null;
+
+    this.duplicateFileName = '';
+
+    this.duplicateDocumentId = '';
+
+    this.duplicateMessage = '';
+
+    this.showDuplicateDialog = false;
+
+    this.statusMessage = '';
+
+    // ----------------------------------------------------------
+    // Debug
+    // ----------------------------------------------------------
+
+    console.log('================ FILE SELECTED ================');
+
+    console.log('Selected files:', this.selectedFiles);
+
+    console.log('Selected file:', this.selectedFile);
+
+    console.log('Is File:', this.selectedFile instanceof File);
+
+    console.log('File name:', this.selectedFile?.name);
+
+    console.log('File size:', this.selectedFile?.size);
+
+    console.log('File type:', this.selectedFile?.type);
+
+    console.log('================================================');
   }
 
-  /**
-   * Reset file inputs in DOM
-   */
+  // ============================================================
+  // RESET FILE INPUTS
+  // ============================================================
+
   private resetFileInputs(): void {
     if (this.dropzoneInput?.nativeElement) {
       this.dropzoneInput.nativeElement.value = '';
     }
+
     if (this.summaryInput?.nativeElement) {
       this.summaryInput.nativeElement.value = '';
     }
+
+    this.fileInputs?.forEach((fileInput) => {
+      fileInput.nativeElement.value = '';
+    });
   }
 
-  /**
-   * Upload & Process Document (stores & integrates with returned ID & URL)
-   */
+  // ============================================================
+  // UPLOAD DOCUMENT
+  // ============================================================
+
   uploadDocument(): void {
-
-    const filesToUpload = this.selectedFiles.length
+    const filesToUpload: File[] = this.selectedFiles.length
       ? [...this.selectedFiles]
-      : (this.selectedFile ? [this.selectedFile] : []);
+      : this.selectedFile
+        ? [this.selectedFile]
+        : [];
 
-    if (!filesToUpload.length) {
-
+    if (filesToUpload.length === 0) {
       this.statusMessage = 'Please select at least one file.';
+
       return;
     }
 
     this.isUploading = true;
+
     this.statusMessage = `Uploading 0/${filesToUpload.length}...`;
 
     const uploadNext = (index: number, successCount: number, failedCount: number): void => {
+      // ========================================================
+      // ALL FILES COMPLETED
+      // ========================================================
+
       if (index >= filesToUpload.length) {
         this.isUploading = false;
-        this.clearSelectedFiles();
+
+        /*
+         * IMPORTANT:
+         *
+         * Do not clear duplicateFile here.
+         *
+         * If a duplicate was found, the workflow stops and
+         * waits for the user's Save as New decision.
+         */
 
         if (failedCount === 0) {
-          this.statusMessage = successCount + ' document' + (successCount === 1 ? '' : 's') + ' uploaded successfully.';
-          return;
+          this.statusMessage =
+            `${successCount} document` + `${successCount === 1 ? '' : 's'} uploaded successfully.`;
+
+          /*
+           * Only clear the normal selection if there is
+           * no pending duplicate operation.
+           */
+          if (!this.showDuplicateDialog) {
+            this.clearSelectedFiles();
+          }
+        } else if (successCount === 0) {
+          this.statusMessage = `All uploads failed (${failedCount}). Please try again.`;
+        } else {
+          this.statusMessage = `${successCount} uploaded, ${failedCount} failed.`;
         }
 
-        if (successCount === 0) {
-          this.statusMessage = 'All uploads failed (' + failedCount + '). Please try again.';
-          return;
-        }
-
-        this.statusMessage = successCount + ' uploaded, ' + failedCount + ' failed.';
         return;
       }
 
+      // ========================================================
+      // CURRENT FILE
+      // ========================================================
+
       const fileToUpload = filesToUpload[index];
+
+      if (!(fileToUpload instanceof File)) {
+        console.error('Invalid file object:', fileToUpload);
+
+        uploadNext(index + 1, successCount, failedCount + 1);
+
+        return;
+      }
+
       this.statusMessage = `Uploading ${index + 1}/${filesToUpload.length}: ${fileToUpload.name}`;
 
-      this.documentService
-        .uploadDocument(fileToUpload)
-        .subscribe({
+      // ========================================================
+      // DEBUG
+      // ========================================================
 
-          next: (document) => {
+      console.group('Uploading File');
 
-            console.log('UPLOAD SUCCESS');
-            console.log(document);
+      console.log('File:', fileToUpload);
 
-            this.prependUploadedDocument(document);
-            uploadNext(index + 1, successCount + 1, failedCount);
+      console.log('Is File:', fileToUpload instanceof File);
 
-          },
+      console.log('Name:', fileToUpload.name);
 
-          error: (error) => {
+      console.log('Type:', fileToUpload.type);
 
-            console.error('UPLOAD ERROR');
-            console.error(error);
-            console.error(this.getUploadErrorMessage(error));
+      console.log('Size:', fileToUpload.size);
+
+      console.groupEnd();
+
+      // ========================================================
+      // SEND ACTUAL FILE TO N8N
+      // ========================================================
+
+      this.documentService.uploadDocument(fileToUpload).subscribe({
+        // ======================================================
+        // RESPONSE
+        // ======================================================
+
+        next: (response: UploadDocumentResponse) => {
+          console.log('UPLOAD RESPONSE:', response);
+
+          // ====================================================
+          // DUPLICATE FOUND
+          // ====================================================
+
+          if (response.duplicate === true) {
+            console.log('================ DUPLICATE FOUND ================');
+
+            console.log('Duplicate response:', response);
+
+            console.log('Original file:', fileToUpload);
+
+            console.log('Original file is File:', fileToUpload instanceof File);
+
+            console.log('Original file name:', fileToUpload.name);
+
+            console.log('=================================================');
+
+            /*
+             * VERY IMPORTANT
+             *
+             * Store the ORIGINAL browser File object in TWO
+             * places.
+             *
+             * We do NOT use the n8n response to reconstruct
+             * the file.
+             */
+
+            this.duplicateFile = fileToUpload;
+
+            this.pendingDuplicateFile = fileToUpload;
+
+            /*
+             * Also keep selectedFile pointing to the same
+             * original File.
+             */
+
+            this.selectedFile = fileToUpload;
+
+            this.duplicateFileName = response.file_name || fileToUpload.name;
+
+            this.duplicateDocumentId = response.document_id || '';
+
+            this.duplicateMessage = response.message || 'File already exists.';
+
+            this.isUploading = false;
+
+            this.showDuplicateDialog = true;
+
+            this.isHandlingDuplicate = false;
+
+            this.statusMessage = `Duplicate file found: ${fileToUpload.name}`;
+
+            /*
+             * STOP HERE.
+             *
+             * We wait for the user to click:
+             *
+             * Save as New
+             */
+
+            return;
+          }
+
+          // ==================================================
+          // NORMAL UPLOAD
+          // ==================================================
+
+          const document = this.createDocumentFromUploadResponse(response, fileToUpload);
+
+          if (!document?.document_id) {
+            console.error('Upload response did not contain document_id:', response);
 
             uploadNext(index + 1, successCount, failedCount + 1);
 
+            return;
           }
 
-        });
+          console.log('UPLOAD SUCCESS:', document);
+
+          this.prependUploadedDocument(document);
+
+          uploadNext(index + 1, successCount + 1, failedCount);
+        },
+
+        // ======================================================
+        // ERROR
+        // ======================================================
+
+        error: (error: unknown) => {
+          console.error('UPLOAD ERROR:', error);
+
+          this.statusMessage = this.getUploadErrorMessage(error);
+
+          uploadNext(index + 1, successCount, failedCount + 1);
+        },
+      });
     };
 
     uploadNext(0, 0, 0);
-
   }
+
+  // ============================================================
+  // CREATE DOCUMENT FROM RESPONSE
+  // ============================================================
+
+  private createDocumentFromUploadResponse(
+    response: UploadDocumentResponse,
+    file: File,
+  ): DocumentSummary | null {
+    const documentId = typeof response.document_id === 'string' ? response.document_id : '';
+
+    if (!documentId) {
+      return null;
+    }
+
+    const fileName = typeof response.file_name === 'string' ? response.file_name : file.name;
+
+    const fileType = typeof response['file_type'] === 'string' ? response['file_type'] : file.type;
+
+    const uploadedAt =
+      typeof response['uploaded_at'] === 'string'
+        ? response['uploaded_at']
+        : new Date().toISOString();
+
+    const status = typeof response['status'] === 'string' ? response['status'] : 'Processed';
+
+    const url = typeof response['url'] === 'string' ? response['url'] : undefined;
+
+    const fileUrl = typeof response['fileUrl'] === 'string' ? response['fileUrl'] : undefined;
+
+    return {
+      ...response,
+
+      id: documentId,
+
+      name: fileName,
+
+      type: fileType,
+
+      status,
+
+      uploadedAt,
+
+      document_id: documentId,
+
+      file_name: fileName,
+
+      file_type: fileType,
+
+      uploaded_at: uploadedAt,
+
+      url,
+
+      fileUrl,
+
+      sourceFile: file,
+    };
+  }
+
+  // ============================================================
+  // CLOSE DUPLICATE DIALOG
+  // ============================================================
+
+  closeDuplicateDialog(): void {
+    this.showDuplicateDialog = false;
+
+    /*
+     * IMPORTANT:
+     *
+     * We clear the duplicate state, but we don't immediately
+     * destroy the selected browser File.
+     *
+     * This prevents the UI from accidentally losing the
+     * original file before Save as New is processed.
+     */
+
+    this.duplicateFile = null;
+
+    this.pendingDuplicateFile = null;
+
+    this.duplicateFileName = '';
+
+    this.duplicateDocumentId = '';
+
+    this.duplicateMessage = '';
+
+    this.isHandlingDuplicate = false;
+  }
+
+  // ============================================================
+  // SAVE DUPLICATE AS NEW
+  // ============================================================
+  saveDuplicateAsNew(): void {
+    console.log('========== SAVE AS NEW CLICKED ==========');
+
+    console.log('selectedFile:', this.selectedFile);
+
+    if (!(this.selectedFile instanceof File)) {
+      console.error('selectedFile is NOT a File', this.selectedFile);
+
+      alert('Original file is not available. Please select the file again.');
+
+      return;
+    }
+
+    this.isHandlingDuplicate = true;
+
+    this.documentService.saveAsNewDocument(this.selectedFile, this.selectedFile.name).subscribe({
+      next: (response) => {
+        console.log('========== SAVE AS NEW SUCCESS ==========');
+
+        console.log('Response:', response);
+
+        this.isHandlingDuplicate = false;
+
+        this.showDuplicateDialog = false;
+
+        // IMPORTANT:
+        // DO NOT call loadDocuments() here for now.
+      },
+
+      error: (error) => {
+        console.error('========== SAVE AS NEW ERROR ==========');
+
+        console.error(error);
+
+        this.isHandlingDuplicate = false;
+      },
+    });
+  }
+
+  // ============================================================
+  // DUPLICATE ACTION ERROR
+  // ============================================================
+
+  private getActionErrorMessage(error: unknown, fallback: string): string {
+    if (typeof error === 'object' && error !== null && 'error' in error) {
+      const nestedError = (
+        error as {
+          error?: unknown;
+        }
+      ).error;
+
+      if (typeof nestedError === 'object' && nestedError !== null && 'message' in nestedError) {
+        const message = (
+          nestedError as {
+            message?: unknown;
+          }
+        ).message;
+
+        if (typeof message === 'string' && message.trim()) {
+          return message;
+        }
+      }
+
+      if (typeof nestedError === 'string' && nestedError.trim()) {
+        return nestedError;
+      }
+    }
+
+    if (error instanceof Error && error.message.trim()) {
+      return error.message;
+    }
+
+    return fallback;
+  }
+
+  // ============================================================
+  // SELECTED FILE PREVIEW
+  // ============================================================
 
   getSelectedFileNamesPreview(): string {
     return this.selectedFiles
@@ -179,29 +630,48 @@ export class Documents implements OnInit {
     return Math.max(this.selectedFiles.length - 2, 0);
   }
 
+  // ============================================================
+  // CLEAR SELECTED FILES
+  // ============================================================
+
   private clearSelectedFiles(): void {
     this.selectedFiles = [];
+
     this.clearSelectedFile();
+
+    this.resetFileInputs();
   }
+
   private clearSelectedFile(): void {
     this.selectedFile = null;
+
     this.fileInputs?.forEach((fileInput) => {
       fileInput.nativeElement.value = '';
     });
   }
 
+  // ============================================================
+  // UPSERT DOCUMENT
+  // ============================================================
+
   private upsertDocument(
     documents: DocumentSummary[],
-    document: DocumentSummary
+    document: DocumentSummary,
   ): DocumentSummary[] {
     return [
       document,
+
       ...documents.filter((existingDocument) => existingDocument.id !== document.id),
     ];
   }
 
+  // ============================================================
+  // MERGE DOCUMENTS
+  // ============================================================
+
   private mergeDocuments(...documentGroups: DocumentSummary[][]): DocumentSummary[] {
     const mergedDocuments: DocumentSummary[] = [];
+
     const documentIndexes = new Map<string, number>();
 
     for (const group of documentGroups) {
@@ -210,13 +680,16 @@ export class Documents implements OnInit {
 
         if (existingIndex === undefined) {
           documentIndexes.set(document.id, mergedDocuments.length);
+
           mergedDocuments.push(document);
+
           continue;
         }
 
         mergedDocuments[existingIndex] = {
           ...mergedDocuments[existingIndex],
           ...document,
+
           sourceFile: document.sourceFile ?? mergedDocuments[existingIndex].sourceFile,
         };
       }
@@ -224,6 +697,10 @@ export class Documents implements OnInit {
 
     return mergedDocuments;
   }
+
+  // ============================================================
+  // LOCAL STORAGE
+  // ============================================================
 
   private getPersistedDocuments(): DocumentSummary[] {
     if (!this.isBrowser) {
@@ -245,14 +722,16 @@ export class Documents implements OnInit {
 
       return parsedDocuments.filter(
         (document): document is DocumentSummary =>
-          typeof document === 'object'
-          && document !== null
-          && 'id' in document
-          && typeof document.id === 'string'
+          typeof document === 'object' &&
+          document !== null &&
+          'id' in document &&
+          typeof document.id === 'string',
       );
     } catch (error) {
       console.error('Unable to parse persisted documents.', error);
+
       localStorage.removeItem(this.uploadedDocumentsStorageKey);
+
       return [];
     }
   }
@@ -262,11 +741,13 @@ export class Documents implements OnInit {
       return;
     }
 
+    /*
+     * File objects cannot be serialized to localStorage.
+     */
+
     const serializableDocuments = documents.map(({ sourceFile, ...document }) => document);
-    localStorage.setItem(
-      this.uploadedDocumentsStorageKey,
-      JSON.stringify(serializableDocuments)
-    );
+
+    localStorage.setItem(this.uploadedDocumentsStorageKey, JSON.stringify(serializableDocuments));
   }
 
   private syncDocuments(documents: DocumentSummary[]): void {
@@ -279,14 +760,21 @@ export class Documents implements OnInit {
     }
 
     this.persistDocuments(documents);
+
+    this.cdr.detectChanges();
   }
 
   private removeDocumentFromState(documentId: string): void {
     const remainingDocuments = this.documents.filter(
-      (document) => document.id !== documentId && document.document_id !== documentId
+      (document) => document.id !== documentId && document.document_id !== documentId,
     );
+
     this.syncDocuments(remainingDocuments);
   }
+
+  // ============================================================
+  // SEARCH
+  // ============================================================
 
   private matchesSearch(document: DocumentSummary): boolean {
     const searchTerm = this.search.trim().toLowerCase();
@@ -301,27 +789,36 @@ export class Documents implements OnInit {
       document.status,
       document.file_name,
       document.file_type,
-    ].some((value) =>
-      typeof value === 'string' && value.toLowerCase().includes(searchTerm)
-    );
+    ].some((value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm));
   }
 
   private prependUploadedDocument(document: DocumentSummary): void {
     this.syncDocuments(this.upsertDocument(this.documents, document));
   }
 
+  // ============================================================
+  // UPLOAD ERROR
+  // ============================================================
+
   private getUploadErrorMessage(error: unknown): string {
-    if (
-      typeof error === 'object'
-      && error !== null
-      && 'error' in error
-      && typeof error.error === 'object'
-      && error.error !== null
-      && 'message' in error.error
-      && typeof error.error.message === 'string'
-      && error.error.message.trim()
-    ) {
-      return `Upload failed: ${error.error.message}`;
+    if (typeof error === 'object' && error !== null && 'error' in error) {
+      const nestedError = (
+        error as {
+          error?: unknown;
+        }
+      ).error;
+
+      if (typeof nestedError === 'object' && nestedError !== null && 'message' in nestedError) {
+        const message = (
+          nestedError as {
+            message?: unknown;
+          }
+        ).message;
+
+        if (typeof message === 'string' && message.trim()) {
+          return `Upload failed: ${message}`;
+        }
+      }
     }
 
     if (error instanceof Error && error.message.trim()) {
@@ -331,28 +828,46 @@ export class Documents implements OnInit {
     return 'Document upload failed. Please try again.';
   }
 
+  // ============================================================
+  // DOCUMENT ID
+  // ============================================================
+
   private getDocumentIdentifier(document: DocumentSummary): string | null {
     const rawId =
-      (typeof document.id === 'string' && document.id.trim() && document.id)
-      || (typeof document.document_id === 'string' && document.document_id.trim() && document.document_id)
-      || '';
+      (typeof document.id === 'string' && document.id.trim() && document.id) ||
+      (typeof document.document_id === 'string' &&
+        document.document_id.trim() &&
+        document.document_id) ||
+      '';
 
     const documentId = rawId.trim();
+
     return documentId ? documentId : null;
   }
 
+  // ============================================================
+  // DELETE ERROR
+  // ============================================================
+
   private getDeleteErrorMessage(error: unknown): string {
-    if (
-      typeof error === 'object'
-      && error !== null
-      && 'error' in error
-      && typeof error.error === 'object'
-      && error.error !== null
-      && 'message' in error.error
-      && typeof error.error.message === 'string'
-      && error.error.message.trim()
-    ) {
-      return `Delete failed: ${error.error.message}`;
+    if (typeof error === 'object' && error !== null && 'error' in error) {
+      const nestedError = (
+        error as {
+          error?: unknown;
+        }
+      ).error;
+
+      if (typeof nestedError === 'object' && nestedError !== null && 'message' in nestedError) {
+        const message = (
+          nestedError as {
+            message?: unknown;
+          }
+        ).message;
+
+        if (typeof message === 'string' && message.trim()) {
+          return `Delete failed: ${message}`;
+        }
+      }
     }
 
     if (error instanceof Error && error.message.trim()) {
@@ -362,207 +877,280 @@ export class Documents implements OnInit {
     return 'Delete failed. Please check n8n webhook method and URL.';
   }
 
+  // ============================================================
+  // DELETE / RENAME STATE
+  // ============================================================
+
   isDeletingDocument(document: DocumentSummary): boolean {
     const documentId = this.getDocumentIdentifier(document);
+
     return documentId !== null && this.isDeletingDocumentId === documentId;
   }
 
   isRenamingDocument(document: DocumentSummary): boolean {
     const documentId = this.getDocumentIdentifier(document);
+
     return documentId !== null && this.isRenamingDocumentId === documentId;
   }
 
-  /**
-   * List Documents
-   */
-loadDocuments(): void {
- 
-  this.isLoading = true;
- 
-  this.documentService.getDocuments().subscribe({
- 
-    next: (documents: DocumentSummary[]) => {
- 
-      console.log('======================');
-      console.log('LIST RESPONSE');
-      console.log(documents);
-      console.log('======================');
+  // ============================================================
+  // LIST DOCUMENTS
+  // ============================================================
 
-    const mergedDocuments = this.mergeDocuments(
-      this.getPersistedDocuments(),
-      documents
-    );
+  loadDocuments(): void {
+    this.isLoading = true;
 
-    this.syncDocuments(mergedDocuments);
+    this.documentService
+      .getDocuments()
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        }),
+      )
+      .subscribe({
+        next: (documents: DocumentSummary[]) => {
+          console.log('======================');
 
-    console.log('Documents:', this.documents);
-    console.log('Length:', this.documents.length);
+          console.log('LIST RESPONSE', documents);
 
-      this.isLoading = false;
+          console.log('======================');
 
-    },
+          const mergedDocuments = this.mergeDocuments(this.getPersistedDocuments(), documents);
 
-    error: (error) => {
+          this.syncDocuments(mergedDocuments);
 
-      console.error(error);
+          console.log('Documents:', this.documents);
 
-      this.isLoading = false;
-      this.statusMessage = 'Unable to load documents.';
+          console.log('Length:', this.documents.length);
+        },
 
-    }
+        error: (error: unknown) => {
+          console.error('LIST ERROR:', error);
 
-  });
+          this.statusMessage = 'Unable to load documents.';
+        },
+      });
+  }
 
-}
+  // ============================================================
+  // SEARCH
+  // ============================================================
 
-  /**
-   * Search
-   */
   runSearch(): void {
     if (!this.search.trim()) {
       this.searchResults = [...this.documents];
+
       return;
     }
 
     this.documentService.searchDocuments(this.search).subscribe({
-      next: (documents) => {
+      next: (documents: DocumentSummary[]) => {
         this.searchResults = documents;
+
         this.cdr.detectChanges();
       },
 
-      error: (error) => {
-        console.error(error);
+      error: (error: unknown) => {
+        console.error('SEARCH ERROR:', error);
+
+        this.statusMessage = 'Unable to search documents.';
       },
     });
   }
 
-  /**
-   * Read / View PDF & Document Details
-   */
+  // ============================================================
+  // VIEW DOCUMENT
+  // ============================================================
+
   viewDocument(document: DocumentSummary): void {
     const existingDocumentUrl = this.getDocumentUrl(document);
 
     if (existingDocumentUrl) {
       this.openDocumentUrl(existingDocumentUrl);
+
       return;
     }
 
     const previewWindow = this.openPendingPreviewWindow();
- 
-    this.documentService.getDocument(document.id).subscribe({
- 
-      next: (response) => {
- 
-        console.log(response);
 
-        const mergedDocument = {
-          ...document,
-          ...response,
-          sourceFile: document.sourceFile ?? response.sourceFile,
-        };
+    this.isLoadingView = true;
 
-        this.selectedDocument = mergedDocument;
-        this.syncDocuments(this.upsertDocument(this.documents, mergedDocument));
+    this.viewingDocId = this.getDocumentIdentifier(document);
 
-        const documentUrl = this.getDocumentUrl(mergedDocument);
+    this.documentService
+      .getDocument(document.id)
+      .pipe(
+        finalize(() => {
+          this.isLoadingView = false;
+        }),
+      )
+      .subscribe({
+        next: (response: DocumentSummary) => {
+          console.log('VIEW RESPONSE:', response);
 
-        if (documentUrl) {
-          this.openDocumentUrl(documentUrl, previewWindow);
-          return;
-        }
+          const mergedDocument = {
+            ...document,
+            ...response,
 
-        previewWindow?.close();
-        this.statusMessage = 'Document preview is not available yet.';
-  
-      },
+            sourceFile: document.sourceFile ?? response.sourceFile,
+          };
 
-      error: (error) => {
+          this.selectedDocument = mergedDocument;
 
-        console.error(error);
-        previewWindow?.close();
-        this.statusMessage = 'Unable to load document preview.';
- 
-      }
+          this.syncDocuments(this.upsertDocument(this.documents, mergedDocument));
 
-    });
+          const documentUrl = this.getDocumentUrl(mergedDocument);
+
+          if (documentUrl) {
+            this.openDocumentUrl(documentUrl, previewWindow);
+
+            return;
+          }
+
+          previewWindow?.close();
+
+          this.statusMessage = 'Document preview is not available yet.';
+        },
+
+        error: (error: unknown) => {
+          console.error('VIEW ERROR:', error);
+
+          previewWindow?.close();
+
+          this.statusMessage = 'Unable to load document preview.';
+        },
+      });
   }
+
+  // ============================================================
+  // CLOSE VIEW MODAL
+  // ============================================================
 
   closeViewModal(): void {
     this.isViewingModalOpen = false;
+
     this.selectedDocument = null;
+
     this.safePdfUrl = null;
+
+    this.viewingDocId = null;
+
+    this.isLoadingView = false;
+
     this.cdr.detectChanges();
   }
 
-  /**
-   * Open PDF URL in a new browser window/tab
-   */
+  // ============================================================
+  // OPEN PDF EXTERNAL
+  // ============================================================
+
   openPdfExternal(): void {
     const url = this.selectedDocument?.url || this.selectedDocument?.fileUrl;
+
     if (url) {
       window.open(url, '_blank');
     }
   }
 
-  /**
-   * Rename
-   */
+  // ============================================================
+  // EDIT / RENAME
+  // ============================================================
+
   editDocument(document: DocumentSummary): void {
     const documentId = this.getDocumentIdentifier(document);
 
     if (!documentId) {
-      this.statusMessage = 'Unable to rename document: missing document ID.';
+      this.statusMessage = 'Unable to update document: missing document ID.';
+
       return;
     }
 
-    if (this.isRenamingDocumentId === documentId) {
-      return;
-    }
+    const picker = window.document.createElement('input');
 
-    const newName = prompt('Enter new document name:', document.name);
+    picker.type = 'file';
 
-    if (!newName?.trim() || newName.trim() === document.name) {
-      return;
-    }
+    picker.accept = '.pdf,.txt,.doc,.docx';
 
-    this.isRenamingDocumentId = documentId;
-    this.statusMessage = `Renaming "${document.name}"...`;
+    picker.onchange = () => {
+      const newFile = picker.files?.[0] ?? null;
 
-    this.documentService.renameDocument(documentId, newName.trim()).pipe(
-      finalize(() => {
-        this.isRenamingDocumentId = null;
-      })
-    ).subscribe({
-      next: (response) => {
-        console.log('Rename response:', response);
+      const newName = prompt(
+        'Enter document name:',
+        newFile?.name || document.file_name || document.name,
+      );
 
-        // Update name in-place — no full reload needed
-        const updatedDocuments = this.documents.map((doc) => {
-          if (this.getDocumentIdentifier(doc) === documentId) {
-            return { ...doc, name: newName.trim(), file_name: newName.trim() };
-          }
-          return doc;
+      if (!newName?.trim()) {
+        return;
+      }
+
+      const trimmedName = newName.trim();
+
+      this.isRenamingDocumentId = documentId;
+
+      this.statusMessage = newFile
+        ? `Updating "${document.name}" (content + name)...`
+        : `Renaming "${document.name}"...`;
+
+      this.documentService
+        .renameDocument(documentId, trimmedName, newFile)
+        .pipe(
+          finalize(() => {
+            this.isRenamingDocumentId = null;
+          }),
+        )
+        .subscribe({
+          next: (response: unknown) => {
+            console.log('UPDATE SUCCESS:', response);
+
+            const updatedDocuments = this.documents.map((doc) => {
+              const id = this.getDocumentIdentifier(doc);
+
+              if (id === documentId) {
+                return {
+                  ...doc,
+
+                  name: trimmedName,
+
+                  file_name: trimmedName,
+
+                  sourceFile: newFile ?? doc.sourceFile,
+                };
+              }
+
+              return doc;
+            });
+
+            this.syncDocuments(updatedDocuments);
+
+            setTimeout(() => this.loadDocuments(), 1000);
+
+            this.statusMessage = 'Document updated successfully.';
+          },
+
+          error: (error: unknown) => {
+            console.error('UPDATE ERROR:', error);
+
+            this.statusMessage = this.getActionErrorMessage(
+              error,
+              'Update failed. Check n8n workflow.',
+            );
+          },
         });
+    };
 
-        this.syncDocuments(updatedDocuments);
-        this.statusMessage = 'Document renamed successfully.';
-      },
-
-      error: (error) => {
-        console.error('Rename error:', error);
-        this.statusMessage = 'Rename failed. Please try again.';
-      },
-    });
+    picker.click();
   }
 
-  /**
-   * Delete
-   */
+  // ============================================================
+  // DELETE
+  // ============================================================
+
   deleteDocument(document: DocumentSummary): void {
     const documentId = this.getDocumentIdentifier(document);
 
     if (!documentId) {
       this.statusMessage = 'Unable to delete document: missing document ID.';
+
       return;
     }
 
@@ -577,34 +1165,46 @@ loadDocuments(): void {
     }
 
     this.isDeletingDocumentId = documentId;
+
     this.statusMessage = `Deleting "${document.name}"...`;
 
-    this.documentService.deleteDocument(documentId).pipe(
-      finalize(() => {
-        this.isDeletingDocumentId = null;
-      })
-    ).subscribe({
+    this.documentService
+      .deleteDocument(documentId)
+      .pipe(
+        finalize(() => {
+          this.isDeletingDocumentId = null;
+        }),
+      )
+      .subscribe({
+        next: (response: unknown) => {
+          console.log('DELETE RESPONSE:', response);
 
-      next: (response) => {
-  
-        console.log(response);
-  
-        this.statusMessage = 'Document deleted successfully.';
-        this.removeDocumentFromState(documentId);
-  
-        this.loadDocuments();
-      },
+          this.statusMessage = 'Document deleted successfully.';
 
-      error: (error) => {
-        console.error(error);
-        this.statusMessage = this.getDeleteErrorMessage(error);
-      },
-    });
+          this.removeDocumentFromState(documentId);
+
+          this.loadDocuments();
+        },
+
+        error: (error: unknown) => {
+          console.error('DELETE ERROR:', error);
+
+          this.statusMessage = this.getDeleteErrorMessage(error);
+        },
+      });
   }
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
 
   logout(): void {
     this.auth.logout();
   }
+
+  // ============================================================
+  // DOCUMENT URL
+  // ============================================================
 
   private getDocumentUrl(document: DocumentSummary): string | null {
     if (typeof document.fileUrl === 'string' && document.fileUrl.trim()) {
@@ -621,6 +1221,10 @@ loadDocuments(): void {
 
     return null;
   }
+
+  // ============================================================
+  // PREVIEW WINDOW
+  // ============================================================
 
   private openPendingPreviewWindow(): Window | null {
     if (!this.isBrowser) {
@@ -645,16 +1249,12 @@ loadDocuments(): void {
 
     if (!openedWindow) {
       this.statusMessage = 'Unable to open document preview.';
+
+      return;
     }
 
     if (documentUrl.startsWith('blob:')) {
       window.setTimeout(() => URL.revokeObjectURL(documentUrl), 60_000);
     }
   }
-
 }
-
-
-
-
-
