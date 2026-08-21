@@ -191,7 +191,7 @@ Message
 
     white-space: pre-line;
 
-    word-break: break-word;  
+    word-break: break-word;
 }
 
 /* ==========================
@@ -334,4 +334,47 @@ Responsive
 
 }
 
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clear-chat-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 8px 12px;
+
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  background: #fff1f2;
+  color: #dc2626;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.clear-chat-button:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+.clear-chat-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }

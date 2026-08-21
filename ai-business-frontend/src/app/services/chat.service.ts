@@ -67,22 +67,65 @@ export class ChatService {
   /**
    * Fast AI Chat request with production endpoint priority
    */
-  sendMessage(prompt: string): Observable<ChatResponse> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    const payload = { prompt };
+sendMessage(
+  prompt: string,
+  sessionId: string
+): Observable<ChatResponse> {
 
-    return this.http.post<ChatResponse>(this.chatWebhookProd, payload, { headers }).pipe(
-      map((response) => this.normalizeChatResponse(response)),
+  const headers = new HttpHeaders({
+    'Content-Type': 'application/json',
+  });
+
+  const payload = {
+    prompt,
+    session_id: sessionId,
+  };
+
+  console.log('========== CHAT REQUEST ==========');
+  console.log('Prompt:', prompt);
+  console.log('Session ID:', sessionId);
+  console.log('Payload:', payload);
+
+  return this.http
+    .post<ChatResponse>(
+      this.chatWebhookProd,
+      payload,
+      { headers }
+    )
+    .pipe(
+
+      map((response) =>
+        this.normalizeChatResponse(response)
+      ),
+
       timeout(65000),
+
       catchError((prodErr) => {
-        console.warn('Prod webhook fallback to test endpoint:', prodErr);
-        return this.http.post<ChatResponse>(this.chatWebhookTest, payload, { headers }).pipe(
-          map((response) => this.normalizeChatResponse(response)),
-          timeout(12000),
+
+        console.warn(
+          'Prod webhook fallback to test endpoint:',
+          prodErr
         );
+
+        return this.http
+          .post<ChatResponse>(
+            this.chatWebhookTest,
+            payload,
+            { headers }
+          )
+          .pipe(
+
+            map((response) =>
+              this.normalizeChatResponse(response)
+            ),
+
+            timeout(12000),
+
+          );
       }),
+
     );
-  }
+}
 
   /**
    * Fast Amazon Chat request with production endpoint priority

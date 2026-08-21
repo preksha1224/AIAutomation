@@ -1,20 +1,38 @@
 <section class="chat-page">
 
   <!-- Header -->
-  <div class="chat-header">
+<!-- Header -->
+<div class="chat-header">
 
-    <div>
-      <h1>🤖 AI Assistant</h1>
-      <p>Ask questions about your uploaded documents and automation workflows.</p>
-    </div>
+  <div>
+    <h1>🤖 AI Assistant</h1>
+
+    <p>
+      Ask questions about your uploaded documents
+      and automation workflows.
+    </p>
+  </div>
+
+  <div class="chat-header-actions">
 
     <div class="chat-status">
       <span class="status-dot"></span>
       AI Online
     </div>
 
+    <button
+      type="button"
+      class="clear-chat-button"
+      (click)="clearChat()"
+      [disabled]="loading || conversation.length === 0">
+
+      🗑 Clear Chat
+
+    </button>
+
   </div>
 
+</div>
   <!-- Conversation -->
 
   <div class="conversation-card">
